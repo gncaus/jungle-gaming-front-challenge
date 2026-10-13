@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Roboto Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url('/fonts/roboto-mono-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Tokens extraídos dos estilos locais do Figma (Color, Text e escala tipográfica).
+ * A paleta padrão do Tailwind é removida para que só existam cores do layout.
+ */
+@theme {
+  --font-sans: 'Roboto Mono Variable', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+  --font-mono: 'Roboto Mono Variable', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+
+  --color-*: initial;
+
+  /* Figma: Color */
+  --color-primary: #d28a4c;
+  --color-primary-light: #dd9a5f;
+  --color-primary-dark: #c47b3e;
+  --color-amber: #e3a44e;
+  --color-foreground: #f5f1eb;
+  --color-background-elevated: #fbfbfb;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-brand-secondary: #b39463;
+  --color-surface-card: #241612;
+  --color-surface-raised: #2f1d15;
+  --color-ink: #140d0a;
+  --color-surface-dark: #38220f;
+  --color-border: #3f2319;
+  --color-border-soft: #55321f;
+  --color-gray-light: #ededed;
+  --color-success: #00a66c;
+  --color-error: #ed1b2e;
+
+  /* Figma: Text */
+  --color-text-coral: #f0805f;
+  --color-text-secondary: #cfb28c;
+  --color-text-accent: #e89b55;
+  --color-text-primary: #f7f3ec;
+
+  /* Papéis semânticos usados pelos componentes shadcn/ui, mapeados para o Figma */
+  --color-background: var(--color-ink);
+  --color-primary-foreground: var(--color-ink);
+  --color-card: var(--color-surface-card);
+  --color-card-foreground: var(--color-foreground);
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-foreground);
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-foreground);
+  --color-muted: var(--color-surface-card);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-surface-dark);
+  --color-accent-foreground: var(--color-foreground);
+  --color-destructive: var(--color-error);
+  --color-input: var(--color-border-soft);
+  --color-ring: var(--color-primary-light);
+
+  /* Figma: Display e Heading (tamanho / altura de linha) */
+  --text-display: 2.6875rem;
+  --text-display--line-height: 4.375rem;
+  --text-display-sm: 2rem;
+  --text-display-sm--line-height: 1.25;
+  --text-heading-lg: 1.75rem;
+  --text-heading-lg--line-height: 1.25;
+  --text-heading: 1.625rem;
+  --text-heading--line-height: 2rem;
+  --text-heading-sm: 1.5rem;
+  --text-heading-sm--line-height: 1.25;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  :focus-visible {
+    @apply outline-ring outline-2 outline-offset-2;
+  }
+}

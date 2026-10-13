@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.vercel
+.tanstack
+lighthouse/reports
+playwright-report
+test-results
+*.tsbuildinfo
+
+# Material de trabalho local
+CLAUDE.md
+docs/figma
