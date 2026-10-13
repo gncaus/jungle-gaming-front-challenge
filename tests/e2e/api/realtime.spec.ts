@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { api, login, mockControl, openApp, users } from '../support/api'
+import { api, login, mockControl, openApi, users } from '../support/api'
 import { advanceTime } from '../support/clock'
 import { openSocket, receivedEvents, socketState } from '../support/socket'
 
@@ -15,7 +15,7 @@ async function emittedIds(page: Page): Promise<string[]> {
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('nft.updated chega pelo socket com o envelope completo e bate com o REST', async ({ page }) => {

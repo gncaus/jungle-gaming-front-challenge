@@ -3,6 +3,7 @@ import {
   networkIds,
   type NftDetail,
   type NftFacets,
+  type NftHighlights,
   type NftListQuery,
   type NftListResponse,
   type NftSummary,
@@ -135,5 +136,16 @@ export function buildFacets(state: DbState): NftFacets {
       min: prices.length > 0 ? Decimal.min(...prices).toFixed() : '0',
       max: prices.length > 0 ? Decimal.max(...prices).toFixed() : '0',
     },
+  }
+}
+
+const heroSlides = 3
+
+export function buildHighlights(state: DbState): NftHighlights {
+  const nfts = visibleNfts(state)
+  const limitedOffer = nfts.find((nft) => nft.previousPrice !== null)
+  return {
+    hero: nfts.filter((nft) => nft.isTrending).slice(0, heroSlides).map(toSummary),
+    limitedOffer: limitedOffer ? toSummary(limitedOffer) : null,
   }
 }

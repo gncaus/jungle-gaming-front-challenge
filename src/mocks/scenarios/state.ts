@@ -41,8 +41,8 @@ export function setScenario(name: ScenarioName): void {
 }
 
 /** `?scenario=nome` na URL seleciona o cenário e o mantém nos próximos carregamentos. */
-export function applyScenarioFromUrl(): void {
-  const requested = new URLSearchParams(window.location.search).get('scenario')
+export function applyScenarioFromUrl(search: string): void {
+  const requested = new URLSearchParams(search).get('scenario')
   if (isScenarioName(requested)) {
     setScenario(requested)
   }

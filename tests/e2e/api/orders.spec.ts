@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { api, login, mockControl, openApp, reloadApp, setScenario, users } from '../support/api'
+import { api, login, mockControl, openApi, reloadApp, setScenario, users } from '../support/api'
 import { advanceTime } from '../support/clock'
 
 interface OrderBody {
@@ -48,7 +48,7 @@ function placeOrder(page: Page, token: string, key: string, body: Record<string,
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('compra confirmada: baixa estoque, limpa só o comprado e o recibo não muda', async ({ page }) => {

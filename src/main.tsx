@@ -1,20 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { AppProviders } from '@/app/providers'
+import { setBackendReady } from '@/shared/lib/backend-ready'
 import '@/styles.css'
 
-const container = document.getElementById('root')
-if (!container) {
-  throw new Error('Elemento #root não encontrado em index.html')
-}
-
+/**
+ * Ponto de entrada mínimo: dispara, ao mesmo tempo, o carregamento da aplicação e o da
+ * API simulada. A interface renderiza assim que estiver pronta, sem esperar o mock;
+ * só as requisições aguardam o worker iniciar (ver shared/lib/backend-ready).
+ */
 if (import.meta.env.VITE_ENABLE_MOCKS !== 'false') {
-  const { startMockWorker } = await import('@/mocks/browser')
-  await startMockWorker()
+  // Lido agora porque o router pode reescrever a URL antes de o módulo de mocks carregar.
+  const initialSearch = window.location.search
+  setBackendReady(
+    import('@/mocks/browser').then(({ startMockWorker }) => startMockWorker(initialSearch)),
+  )
 }
 
-createRoot(container).render(
-  <StrictMode>
-    <AppProviders />
-  </StrictMode>,
-)
+void import('@/app/bootstrap')

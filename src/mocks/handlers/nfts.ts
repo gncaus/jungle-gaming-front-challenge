@@ -2,10 +2,11 @@ import {
   nftListQuerySchema,
   type NftDetail,
   type NftFacets,
+  type NftHighlights,
   type NftListResponse,
 } from '@/features/catalog/schemas'
 import { readDb } from '@/mocks/db/store'
-import { buildFacets, findNft, listNfts, toDetail } from '@/mocks/domain/catalog'
+import { buildFacets, buildHighlights, findNft, listNfts, toDetail } from '@/mocks/domain/catalog'
 import { parseInput } from '@/mocks/handlers/http-error'
 import { route } from '@/mocks/handlers/route'
 
@@ -26,8 +27,10 @@ export const nftHandlers = [
     return listNfts(readDb(), query)
   }),
 
-  // Precisa vir antes de `/nfts/:id`, que também casaria com este caminho.
+  // Estas duas precisam vir antes de `/nfts/:id`, que também casaria com os caminhos.
   route<NftFacets>('get', '/nfts/facets', () => buildFacets(readDb())),
+
+  route<NftHighlights>('get', '/nfts/highlights', () => buildHighlights(readDb())),
 
   route<NftDetail>('get', '/nfts/:id', ({ param }) => toDetail(findNft(readDb(), param('id')))),
 ]

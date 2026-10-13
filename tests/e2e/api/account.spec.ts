@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { api, login, openApp, reloadApp, users } from '../support/api'
+import { api, login, openApi, reloadApp, users } from '../support/api'
 
 interface ProfileBody {
   displayName: string
@@ -41,7 +41,7 @@ const validWallet = {
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('perfil: edição persiste após refresh e valida campos', async ({ page }) => {

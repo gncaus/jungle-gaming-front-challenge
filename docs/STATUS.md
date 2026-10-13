@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 3.
+Atualizado em 13/10/2026, ao fim da fatia 4.
 
 ## Feito
 
@@ -31,9 +31,23 @@ Atualizado em 13/10/2026, ao fim da fatia 3.
 - Ponto único de mudança de versão (`src/mocks/db/changes.ts`): o que muda no banco sai em REST e em evento.
 - `order.updated` só para o dono do pedido; `nft.updated` para todos.
 - Timer de resolução de pedido, com lock entre abas.
-- Cliente `socket.io-client` em `src/app/socket.ts`; a home provisória mostra a conexão e o último evento.
+- Cliente `socket.io-client` em `src/app/socket.ts`.
 - `__mockControl` derruba conexões, tira o socket do ar e reenvia eventos.
-- 8 testes novos de tempo real; 60 no total.
+- 6 testes de tempo real pelo `socket.io-client`.
+
+**Fatia 4 — layout base e catálogo**
+
+- Cabeçalho (a partir de 768 px), rodapé e página inicial completa: hero com destaques, filtros, abas, ordenação, grade, paginação, banners e Diário da Cunhagem.
+- Busca, filtros, aba, ordenação e página na URL, com restauração por refresh e histórico.
+- Filtros em painel lateral no mobile, com foco controlado.
+- Skeletons com shimmer nas dimensões do conteúdo; estados vazio, erro com nova tentativa e atualização em segundo plano.
+- Política de consultas (cache, novas tentativas, descarte de resposta obsoleta) e `HttpError` no interceptor do Axios.
+- `nft.updated` revalida o catálogo pelo REST.
+- `GET /nfts/highlights` no mock.
+- Interface renderiza sem esperar o mock; aplicação e mock carregam em paralelo.
+- Regressão visual da página inicial em 1440 e 390 px.
+- Lighthouse da página inicial (mediana de 3): mobile 93 / 100 / 100 / 100, LCP 3,1 s, CLS 0, TBT 116 ms; desktop 100 / 100 / 100 / 100, LCP 0,65 s.
+- 90 testes no total (44 de interface nos dois viewports, 44 de contrato, 2 visuais), 1 pulado no desktop por ser só do mobile.
 
 ## Em andamento
 
@@ -41,7 +55,7 @@ Nada.
 
 ## Próximo passo
 
-Fatia 4: layout base (cabeçalho, rodapé, navegação mobile) e catálogo com busca, filtros, ordenação e paginação na URL. A feature provisória `system` sai nesta fatia.
+Fatia 5: detalhe do NFT (galeria, edições, quantidade), login e cadastro em diálogo, sessão, rotas protegidas com retorno e favoritos com atualização otimista.
 
 ## Decisões
 
@@ -56,12 +70,19 @@ Fatia 4: layout base (cabeçalho, rodapé, navegação mobile) e catálogo com b
 - O socket usa o caminho `/realtime/` e só o transporte WebSocket; os motivos estão em "Tempo real" no `ARCHITECTURE.md`.
 - Eventos não cruzam abas do navegador: fica como limitação documentada.
 
+- O `socket.io-client` é importado sob demanda, depois de o mock iniciar; do contrário a conexão escapa do MSW.
+- A biblioteca de cookies embutida no MSW é substituída por uma versão vazia no build, porque a API não usa cookies e ela pesava 120 KB comprimidos.
+- Itens do layout fora do escopo do enunciado aparecem desabilitados ou como texto, sem simular sucesso (lista no `ARCHITECTURE.md`).
+
 ## Pendências
 
-- **Lighthouse mobile:** 93 de Performance com a página ainda vazia (LCP de 2,9 s). O custo vem do JavaScript inicial e do MSW carregado antes do primeiro render. Precisa de atenção antes de a home ganhar imagens.
+- **Lighthouse mobile:** a página inicial está em 93 de Performance, com LCP de 3,1 s. O LCP é a imagem do primeiro card, que depende de a API simulada responder. Refazer a medição a cada fatia que mexer na página inicial.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
-- **Feature `system`** (`/api/health` e o aviso "API simulada: conectada" na home): é provisória e sai quando o catálogo entrar na fatia 4. Os utilitários de teste esperam esse aviso para saber que o mock assumiu (`waitForApp`), então precisam mudar junto.
-- **Tempo real no cliente (fatia 8):** o transporte está provado, mas o cliente ainda não descarta duplicatas nem eventos antigos, não reconcilia por REST ao reconectar e não atualiza o cache. A conexão autenticada depende da sessão, que entra na fatia 5.
-- **Tamanho do JavaScript inicial:** zod, decimal.js e socket.io-client já entram no carregamento da home. Reavaliar com o Lighthouse quando o catálogo existir.
+- **Navegação inferior do mobile** (início, favoritos, carrinho, perfil): entra quando os destinos existirem, nas fatias 5 e 6.
+- **Cabeçalho:** faltam o carrinho com contador (fatia 6) e o botão "Entrar" (fatia 5). No mobile ainda não há cabeçalho; conferir os frames mobile das outras telas na fatia 5.
+- **Card do NFT:** faltam os botões de favoritar e de adicionar ao carrinho (fatias 5 e 6).
+- **Página do NFT:** hoje mostra só imagem, nome, preço e descrição. O layout completo é a fatia 5.
+- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial.
+- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` só invalida o catálogo. Faltam descartar duplicatas e eventos antigos, reconciliar por REST ao reconectar, tratar `order.updated` e autenticar a conexão (depende da sessão, fatia 5).
 - **Detalhe do NFT** ainda não está na lista de páginas do Lighthouse (`lighthouse/config.mjs`).
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

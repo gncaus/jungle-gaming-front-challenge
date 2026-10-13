@@ -1,4 +1,6 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
+import { SiteFooter } from '@/app/layout/site-footer'
+import { SiteHeader } from '@/app/layout/site-header'
 import { Button } from '@/shared/ui/button'
 
 export const Route = createRootRoute({
@@ -15,21 +17,18 @@ function RootLayout() {
       >
         Pular para o conteúdo
       </a>
-      <header className="mx-auto w-full max-w-[1200px] border-b px-4 py-6 md:px-6">
-        <Link to="/" className="text-sm font-bold tracking-widest" aria-label="Kurio — início">
-          KURIO
-        </Link>
-      </header>
-      <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-[1200px] flex-1 px-4 md:px-6">
+      <SiteHeader />
+      <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
       </main>
+      <SiteFooter />
     </div>
   )
 }
 
 function NotFound() {
   return (
-    <section className="flex flex-col items-start gap-4 py-24">
+    <section className="page-container flex flex-col items-start gap-4 py-24">
       <p className="text-text-accent text-sm">Erro 404</p>
       <h1 className="text-display-sm md:text-display font-bold uppercase">Página não encontrada</h1>
       <p className="text-muted-foreground max-w-prose text-sm">

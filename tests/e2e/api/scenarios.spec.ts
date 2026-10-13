@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { api, login, mockControl, openApp, setScenario, users, waitForApp } from '../support/api'
+import { api, login, mockControl, openApi, setScenario, users, waitForApp } from '../support/api'
 
 interface ErrorBody {
   code: string
@@ -10,7 +10,7 @@ interface ListBody {
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('catálogo vazio', async ({ page }) => {

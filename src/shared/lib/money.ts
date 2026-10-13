@@ -15,3 +15,14 @@ export function eth(value: EthAmount): Decimal {
 export function toEthAmount(value: Decimal): EthAmount {
   return value.toFixed()
 }
+
+/** Número para exibição: pelo menos 2 casas e nenhuma casa significativa cortada (`1.19`, `0.016`). */
+export function formatEthNumber(value: EthAmount, decimalSeparator: '.' | ',' = '.'): string {
+  const amount = eth(value)
+  const text = amount.toFixed(Math.max(2, amount.decimalPlaces()))
+  return decimalSeparator === '.' ? text : text.replace('.', decimalSeparator)
+}
+
+export function formatEth(value: EthAmount): string {
+  return `${formatEthNumber(value)} ETH`
+}

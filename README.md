@@ -40,6 +40,12 @@ npx playwright install chromium
 
 O relatório HTML dos testes fica em `playwright-report/` (`npx playwright show-report`) e os traces das falhas em `test-results/`.
 
+A suíte inclui regressão visual, com imagens de referência geradas no Windows. Para regenerá-las depois de uma mudança visual intencional (ou em outro sistema operacional):
+
+```bash
+npm run test:e2e -- visual --update-snapshots
+```
+
 Para rodar a suíte contra um ambiente publicado, informe a URL:
 
 ```bash

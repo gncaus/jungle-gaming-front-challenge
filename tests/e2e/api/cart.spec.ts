@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { api, login, mockControl, openApp, reloadApp, users } from '../support/api'
+import { api, login, mockControl, openApi, reloadApp, users } from '../support/api'
 
 interface CartBody {
   items: { id: string; nftId: string; quantity: number; lineTotal: string; status: string }[]
@@ -38,7 +38,7 @@ async function fillFigmaCart(page: Page, identity: { guestId?: string; token?: s
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('visitante adiciona, altera e remove itens; o carrinho sobrevive a refresh', async ({ page }) => {

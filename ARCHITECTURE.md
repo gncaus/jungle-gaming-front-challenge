@@ -26,10 +26,11 @@ Duas versões foram fixadas abaixo da mais recente por compatibilidade:
 
 ```
 src/
-  app/          providers, router e query client
+  main.tsx      ponto de entrada mínimo: dispara a aplicação e a API simulada em paralelo
+  app/          providers, router, query client, socket e o layout comum (cabeçalho e rodapé)
   routes/       rotas por arquivo (a árvore em routeTree.gen.ts é gerada pelo plugin)
   features/<x>/ api (Axios), hooks (Query), components e schemas (zod) de cada domínio
-  shared/       ui (shadcn adaptado) e lib (http, utilitários)
+  shared/       ui (shadcn adaptado) e lib (http, dinheiro, utilitários)
   mocks/        tudo o que é simulado: fixtures, banco, regras de negócio, handlers e cenários
 tests/e2e/      Playwright (api/ testa os contratos; support/ tem os utilitários)
 lighthouse/     configuração e script da auditoria
@@ -44,11 +45,40 @@ Regra de dependência: componentes usam hooks, hooks usam funções de `api/`, e
 - `routeTree.gen.ts` é gerado pelo plugin e versionado, para que `npm run typecheck` funcione em um checkout limpo sem rodar o Vite antes.
 - Rota inexistente é tratada pelo `notFoundComponent` da rota raiz, inclusive em acesso direto pela URL.
 
+### Catálogo na URL
+
+Busca, filtros, aba, ordenação e página vivem nos parâmetros da URL da página inicial, validados por `catalogSearchSchema` (`src/features/catalog/search.ts`) no `validateSearch` da rota.
+
+- A URL é a única fonte desse estado: os componentes leem dela e navegam para mudá-la. Refresh, link compartilhado e os botões voltar e avançar restauram o catálogo.
+- Mudar busca, filtro, aba ou ordenação navega com `page: 1`. Só a paginação mantém os demais parâmetros e troca a página.
+- Valor inválido digitado na URL cai no padrão do campo, em vez de quebrar a página.
+- Parâmetros com o valor padrão não aparecem na URL (`stripSearchParams`).
+- A faixa de preço só vai para a URL ao clicar em "Aplicar", como no layout; os demais filtros aplicam na hora.
+
+## Consultas, cache e sincronização
+
+Configuração em `src/app/query-client.ts`; chaves e opções de cada consulta em `src/features/<feature>/hooks/`.
+
+| Aspecto | Política |
+| --- | --- |
+| Chaves | Uma fábrica por feature (`catalogKeys`). Os parâmetros da consulta fazem parte da chave. Dados privados levarão o id do usuário na chave. |
+| Tempo de cache | Dados ficam frescos por 30 s. Depois disso continuam sendo exibidos e são revalidados em segundo plano, com o aviso "atualizando…". |
+| Novas tentativas | Só falha transitória (erro de conexão ou 5xx) é repetida, até 2 vezes, com espera crescente. Erro 4xx não é repetido, porque responderia igual. |
+| Mutations | Nunca são repetidas automaticamente, para não duplicar operações. |
+| Respostas obsoletas | Cada combinação de parâmetros tem sua chave e a requisição recebe o `signal` do Query. Ao mudar um filtro, a consulta anterior é cancelada e, mesmo que responda, não é exibida. |
+| Tempo real | O evento `nft.updated` invalida as consultas do catálogo, que são refeitas pela API REST. O socket avisa que algo mudou; o estado exibido vem sempre do REST. |
+
+Erros da API chegam à interface como `HttpError` (`src/shared/lib/http.ts`), já no formato do contrato de erro. O interceptor do Axios faz essa conversão em um só lugar.
+
+Estados de cada consulta do catálogo: carregando (skeleton com shimmer nas dimensões do conteúdo), vazio (com opção de limpar a busca), erro (com "tentar novamente") e atualização em segundo plano.
+
 ## API simulada
 
 - O MSW intercepta as chamadas no service worker (`public/mockServiceWorker.js`), então as requisições saem de verdade pelo Axios e aparecem na aba de rede.
 - A ativação é por configuração: ligada por padrão, desligada com `VITE_ENABLE_MOCKS=false`. O módulo de mocks é carregado por `import()` dinâmico, fora do bundle principal.
-- `src/main.tsx` aguarda o worker iniciar antes do primeiro render. Sem isso, as primeiras consultas escapariam do mock.
+- A interface não espera o mock para renderizar. `src/main.tsx` dispara o carregamento da aplicação e o do mock ao mesmo tempo, e quem espera o worker iniciar são as requisições: o interceptor do Axios e a conexão de socket aguardam `backendReady()` (`src/shared/lib/backend-ready.ts`). Assim nenhuma chamada escapa do mock e a tela não fica em branco enquanto ele sobe.
+- O cenário pedido em `?scenario=` é lido da URL logo no ponto de entrada, antes de o router poder reescrevê-la.
+- `tough-cookie`, a biblioteca de cookies que o MSW embute, é substituída por uma versão vazia (`src/mocks/cookie-store-stub.ts`, via `resolve.alias`). A API não usa cookies, e a biblioteca traz a lista pública de sufixos de domínio: com ela o JavaScript do mock tinha 175 KB comprimidos; sem ela, 54 KB.
 - Os mocks ficam ligados também no build de produção, que é o que vai para a demonstração publicada.
 
 ### Organização dos mocks
@@ -85,7 +115,7 @@ Base: `/api`. Autenticação: `Authorization: Bearer <token>`. Visitante: `X-Gue
 | --- | --- | --- |
 | Sessão | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | público |
 | | `GET /auth/session` | autenticado |
-| NFTs | `GET /nfts`, `GET /nfts/facets`, `GET /nfts/:id` | público |
+| NFTs | `GET /nfts`, `GET /nfts/facets`, `GET /nfts/highlights`, `GET /nfts/:id` | público |
 | Favoritos | `GET /favorites`, `PUT /favorites/:nftId`, `DELETE /favorites/:nftId` | autenticado |
 | Carrinho | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:itemId`, `DELETE /cart/items/:itemId` | visitante ou autenticado |
 | Cotação | `POST /quotes` | visitante ou autenticado |
@@ -172,7 +202,7 @@ Os dois eventos usam o mesmo envelope (`src/features/realtime/schemas.ts`):
 
 ### Transporte
 
-- O cliente é o `socket.io-client`, criado em `src/app/socket.ts`, na mesma origem da aplicação e com o caminho `/realtime/`.
+- O cliente é o `socket.io-client`, aberto em `src/app/socket.ts`, na mesma origem da aplicação e com o caminho `/realtime/`. `src/app/realtime.tsx` mantém a conexão enquanto a aplicação está aberta e liga os eventos ao cache.
 - O servidor é simulado em `src/mocks/socket/server.ts` com o `ws` do MSW e o `@mswjs/socket.io-binding`, que codifica e decodifica os pacotes do protocolo Socket.IO.
 - A autenticação usa o campo `auth` do Socket.IO: o cliente envia o token da sessão no pacote de conexão e o mock associa a conexão ao usuário.
 
@@ -185,6 +215,7 @@ Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edi�
 ### Limitações da simulação
 
 - **Só WebSocket.** O MSW intercepta WebSocket, mas não o long-polling com que o Socket.IO começa por padrão. Por isso o cliente usa `transports: ['websocket']`.
+- **Cliente carregado depois do mock.** O `socket.io-client` guarda a referência ao `WebSocket` do navegador no momento em que seu módulo é carregado. Se isso acontecer antes de o MSW substituir o `WebSocket`, a conexão vai para o servidor real e o mock nunca a vê. Por isso o cliente é importado sob demanda, depois de `backendReady()`.
 - **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
 - **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
 - **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
@@ -210,18 +241,44 @@ Os tokens vêm dos estilos locais do arquivo do Figma e estão em `src/styles.cs
 
 O layout é escuro e não há tema claro.
 
-### Desvios do Figma
+### Desvios do Figma e decisões de UX
 
 - O estilo de cor *Secondary* do Figma (`#B39463`) chama-se `brand-secondary` no código, porque `secondary` já é um papel do shadcn/ui.
+- **Contagens dos filtros:** o layout mostra números ilustrativos (33, 12, 65…). A aplicação mostra a contagem real de cada coleção e rede.
+- **Linha de resultado:** acima da grade há a linha "36 NFTs encontrados", que não está no layout. Ela dá retorno, inclusive a leitores de tela, sobre o efeito de cada filtro.
+- **Filtro selecionado:** além da cor, o item marcado ganha negrito e um ícone de confirmação, para o estado não depender só de cor.
+- **Indicadores do carrossel:** têm área de toque de 24 px, maior que os pontos de 8 px do layout, para atender ao tamanho mínimo de alvo.
+- **Itens fora do escopo do enunciado:** "Criadores" e "Aprenda" aparecem no menu, desabilitados e anunciados como "em breve". Os artigos do Diário da Cunhagem trazem "Artigo disponível em breve" no lugar do link "Ler mais". O formulário de novidades avisa que a inscrição não está disponível, em vez de simular sucesso. No rodapé, só as coleções são links; o restante é texto.
+- **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas. A barra de navegação inferior do mobile ainda não foi implementada.
+- **Tela de carregamento:** o `index.html` traz a marca e "Carregando o marketplace…", exibidos até a aplicação iniciar. Não está no layout.
+- **Cards no mobile:** o nome reserva duas linhas, para a grade ter a mesma altura com skeletons e com dados.
 
 ## Testes
 
 - Chromium em dois projetos: `desktop` (1440×900) e `mobile` (390×844, com toque).
 - A suíte roda contra o build de produção servido por `vite preview`, o mesmo artefato que é publicado.
 - Traces são guardados nas falhas e o relatório HTML é gerado em toda execução.
+- Cada teste começa em um contexto de navegador novo, então o banco simulado parte sempre da semente.
+- **Testes de interface** (`tests/e2e/*.spec.ts`) rodam nos dois projetos e verificam o que aparece na tela.
+- **Testes de contrato** (`tests/e2e/api/`) rodam só no projeto desktop. Chamam a API com `fetch` de dentro da página, para passar pelo service worker do MSW, e abrem uma rota sem tela para que as consultas da própria aplicação não se misturem às do teste.
+- **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock.
+- **Regressão visual** (`tests/e2e/visual.spec.ts`): as imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
 
 ## Lighthouse
 
 `npm run lighthouse` faz o build, sobe o `vite preview` em uma porta própria e audita cada página em dois perfis (mobile e desktop), três vezes cada, com um Chrome novo por execução. O script grava os relatórios HTML e JSON de cada execução e um resumo com as medianas, LCP, CLS, TBT, versões e ambiente em `lighthouse/reports/`.
 
 A configuração versionada está em `lighthouse/config.mjs`.
+
+### O que foi feito pelo desempenho
+
+O mock roda no navegador, então o JavaScript dele faz parte do carregamento de toda página. As medidas abaixo tratam disso sem tirar nada da entrega:
+
+- **Carregamento em paralelo.** O ponto de entrada dispara a aplicação e o mock ao mesmo tempo, e um plugin em `vite.config.ts` anuncia esses chunks no HTML com `modulepreload`, para o download começar junto com o HTML.
+- **Primeira pintura sem JavaScript.** O `index.html` traz uma tela de carregamento, e os `modulepreload` têm prioridade baixa para não disputar banda com o CSS e a fonte.
+- **Biblioteca de cookies do MSW removida** do bundle, como descrito em "API simulada".
+- **Socket sob demanda.** O `socket.io-client` fica fora do bundle inicial.
+- **Imagens.** WebP em três larguras com `srcset` e `sizes`, dimensões declaradas, carregamento sob demanda abaixo da dobra e prioridade alta só para a arte do topo e a primeira linha de cards.
+- **Fonte** servida da própria origem, com `preload` e `font-display: swap`.
+- **Divisão de código por rota**, feita pelo plugin do router.
+- **Sem deslocamento de layout.** Skeletons têm as dimensões do conteúdo final (CLS 0).

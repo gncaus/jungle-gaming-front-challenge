@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { api, login, mockControl, openApp, reloadApp, users } from '../support/api'
+import { api, login, mockControl, openApi, reloadApp, users } from '../support/api'
 
 interface AuthBody {
   token: string
@@ -12,7 +12,7 @@ interface ErrorBody {
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('cadastro cria conta, abre sessão e não guarda a senha em claro', async ({ page }) => {

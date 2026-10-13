@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import Decimal from 'decimal.js'
-import { api, openApp } from '../support/api'
+import { api, openApi } from '../support/api'
 
 interface Summary {
   id: string
@@ -15,7 +15,7 @@ interface ListBody {
 }
 
 test.beforeEach(async ({ page }) => {
-  await openApp(page)
+  await openApi(page)
 })
 
 test('lista paginada com 36 NFTs em 4 páginas', async ({ page }) => {

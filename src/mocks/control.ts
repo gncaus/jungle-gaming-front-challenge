@@ -11,7 +11,10 @@ import {
   setSocketAvailable,
 } from '@/mocks/socket/server'
 
+let ready = false
+
 const control: MockControl = {
+  isReady: () => ready,
   reset() {
     resetDb()
     setScenario('default')
@@ -45,4 +48,8 @@ const control: MockControl = {
 
 export function installMockControl(): void {
   window.__mockControl = control
+}
+
+export function markMockReady(): void {
+  ready = true
 }

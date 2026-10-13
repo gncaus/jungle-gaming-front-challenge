@@ -19,7 +19,16 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Mostrado até a aplicação carregar; o React substitui este conteúdo ao iniciar. -->
+      <div class="flex min-h-dvh flex-col items-center justify-center gap-3" role="status">
+        <p class="text-sm font-bold tracking-widest">KURIO</p>
+        <p class="text-text-secondary text-sm">Carregando o marketplace…</p>
+      </div>
+    </div>
+    <noscript>
+      <p class="p-5 text-center text-sm">O Kurio precisa de JavaScript ativado para funcionar.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

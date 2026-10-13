@@ -12,6 +12,8 @@ export interface EmittedEventInfo {
  * Arquivo só de tipos e sem alias de import: também é usado pelos testes E2E.
  */
 export interface MockControl {
+  /** `true` quando o service worker do mock já intercepta as requisições. */
+  isReady(): boolean
   /** Restaura o banco e o cenário para o estado inicial conhecido. */
   reset(): void
   getScenario(): ScenarioName

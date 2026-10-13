@@ -94,3 +94,12 @@ export const nftFacetsSchema = z.object({
   price: z.object({ min: ethAmountSchema, max: ethAmountSchema }),
 })
 export type NftFacets = z.infer<typeof nftFacetsSchema>
+
+/** Resposta de `GET /nfts/highlights`: o que a página inicial destaca. */
+export const nftHighlightsSchema = z.object({
+  /** NFTs do carrossel do topo. */
+  hero: z.array(nftSummarySchema),
+  /** NFT com preço promocional, para o cartão de oferta limitada. */
+  limitedOffer: nftSummarySchema.nullable(),
+})
+export type NftHighlights = z.infer<typeof nftHighlightsSchema>

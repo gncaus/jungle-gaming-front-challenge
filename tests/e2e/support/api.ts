@@ -19,16 +19,23 @@ interface Identity {
   headers?: Record<string, string>
 }
 
-/** Espera a aplicação renderizar, o que só acontece depois de o mock assumir as requisições. */
+/** Espera o service worker do mock assumir as requisições da página. */
 export async function waitForApp(page: Page): Promise<void> {
-  await expect(page.getByRole('status')).toHaveText('API simulada: conectada')
+  await page.waitForFunction(() => window.__mockControl?.isReady() === true)
 }
 
-/** Abre a aplicação e restaura o estado inicial do mock. */
-export async function openApp(page: Page): Promise<void> {
-  await page.goto('/')
+/** Abre a aplicação no endereço dado, com o mock pronto. Cada teste já parte de um navegador limpo. */
+export async function openApp(page: Page, url = '/'): Promise<void> {
+  await page.goto(url)
   await waitForApp(page)
-  await mockControl(page, 'reset')
+}
+
+/**
+ * Abre uma rota sem tela, para os testes de contrato: o mock sobe, mas a página não faz
+ * nenhuma consulta por conta própria que pudesse se misturar às chamadas do teste.
+ */
+export async function openApi(page: Page): Promise<void> {
+  await openApp(page, '/__api')
 }
 
 export async function reloadApp(page: Page): Promise<void> {

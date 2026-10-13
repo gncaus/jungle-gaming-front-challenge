@@ -10,6 +10,10 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
+  expect: {
+    // Tolerância para variação de antialiasing entre execuções; diferenças reais passam disso.
+    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
+  },
   use: {
     baseURL: externalBaseUrl ?? localBaseUrl,
     trace: 'retain-on-failure',
