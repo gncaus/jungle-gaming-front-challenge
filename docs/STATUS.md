@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 4.
+Atualizado em 13/10/2026, ao fim da fatia 5.
 
 ## Feito
 
@@ -49,13 +49,26 @@ Atualizado em 13/10/2026, ao fim da fatia 4.
 - Lighthouse da página inicial (mediana de 3): mobile 93 / 100 / 100 / 100, LCP 3,1 s, CLS 0, TBT 116 ms; desktop 100 / 100 / 100 / 100, LCP 0,65 s.
 - 90 testes no total (44 de interface nos dois viewports, 44 de contrato, 2 visuais), 1 pulado no desktop por ser só do mobile.
 
+**Fatia 5 — sessão, detalhe do NFT e favoritos**
+
+- Login e cadastro em diálogo (tela inteira no mobile), com validação por campo e erros da API.
+- Sessão recuperada no refresh; expiração reabre o login e retoma a tela; logout e troca de usuário descartam os dados privados e refazem o socket.
+- Rota privada `/perfil` (por enquanto só leitura e "Sair") com retorno ao destino depois do login.
+- Cabeçalho com "Entrar" ou usuário; navegação inferior do mobile com Início, Explorar e Perfil.
+- Detalhe do NFT: galeria, edições com preço e estoque próprios, quantidade com limite, avaliação, abas, "Mais desta coleção", skeleton, erro e atualização em tempo real.
+- Favoritos com atualização otimista e desfazer em caso de falha, no detalhe e no card; visitante conclui o favorito depois de entrar.
+- Aviso global com `aria-live` (`Announcer`).
+- Regressão visual do detalhe; Lighthouse passa a auditar o detalhe.
+- Lighthouse (mediana de 3): início mobile 92, detalhe mobile 92, ambos desktop 100; acessibilidade, boas práticas e SEO em 100 nos quatro. LCP mobile de 3,2 s nas duas páginas, CLS 0.
+- 148 testes no total, 1 pulado no desktop por ser só do mobile.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 5: detalhe do NFT (galeria, edições, quantidade), login e cadastro em diálogo, sessão, rotas protegidas com retorno e favoritos com atualização otimista.
+Fatia 6: carrinho (adicionar pelo detalhe e pelo card, quantidades, remoção, cupom, resumo pela cotação, persistência e mescla no login), com o contador no cabeçalho e os botões "Comprar" do detalhe.
 
 ## Decisões
 
@@ -74,15 +87,18 @@ Fatia 5: detalhe do NFT (galeria, edições, quantidade), login e cadastro em di
 - A biblioteca de cookies embutida no MSW é substituída por uma versão vazia no build, porque a API não usa cookies e ela pesava 120 KB comprimidos.
 - Itens do layout fora do escopo do enunciado aparecem desabilitados ou como texto, sem simular sucesso (lista no `ARCHITECTURE.md`).
 
+- Na troca de sessão, o cache é limpo de tudo o que é privado, mas o catálogo público fica. O `CLAUDE.md` pedia `queryClient.clear()`; apagar também o catálogo deixava as telas abertas sem receber as atualizações em tempo real.
+- O diálogo de login vive na URL (`?auth=`), e o favorito pedido por um visitante também (`?favoritar=`).
+- A edição escolhida no detalhe vive na URL (`?edicao=`); a quantidade é estado local.
+
 ## Pendências
 
-- **Lighthouse mobile:** a página inicial está em 93 de Performance, com LCP de 3,1 s. O LCP é a imagem do primeiro card, que depende de a API simulada responder. Refazer a medição a cada fatia que mexer na página inicial.
+- **Lighthouse mobile:** 92 nas duas páginas, com pouca folga sobre a meta de 90; o LCP (3,2 s) depende de a API simulada responder. Medir de novo a cada fatia. Ainda há o que cortar: zod responde por cerca de 40 KB comprimidos do bundle comum.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
-- **Navegação inferior do mobile** (início, favoritos, carrinho, perfil): entra quando os destinos existirem, nas fatias 5 e 6.
-- **Cabeçalho:** faltam o carrinho com contador (fatia 6) e o botão "Entrar" (fatia 5). No mobile ainda não há cabeçalho; conferir os frames mobile das outras telas na fatia 5.
-- **Card do NFT:** faltam os botões de favoritar e de adicionar ao carrinho (fatias 5 e 6).
-- **Página do NFT:** hoje mostra só imagem, nome, preço e descrição. O layout completo é a fatia 5.
-- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial.
-- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` só invalida o catálogo. Faltam descartar duplicatas e eventos antigos, reconciliar por REST ao reconectar, tratar `order.updated` e autenticar a conexão (depende da sessão, fatia 5).
-- **Detalhe do NFT** ainda não está na lista de páginas do Lighthouse (`lighthouse/config.mjs`).
+- **Navegação inferior do mobile:** falta o carrinho (fatia 6). O ícone de favoritos do layout depende de decidir se haverá uma tela de favoritos, que o enunciado não pede.
+- **Cabeçalho:** falta o carrinho com contador (fatia 6). No mobile não há cabeçalho; a navegação é a barra inferior.
+- **Detalhe e card:** faltam os botões "Comprar" e de carrinho (fatia 6).
+- **Perfil:** só leitura; edição, avatar, senha e carteiras são a fatia 9.
+- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial ou o detalhe.
+- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` só invalida o catálogo, e a conexão já é autenticada. Faltam descartar duplicatas e eventos antigos, reconciliar por REST ao reconectar e tratar `order.updated`.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

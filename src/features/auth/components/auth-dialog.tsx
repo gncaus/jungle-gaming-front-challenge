@@ -1,7 +1,8 @@
-import { Link, useNavigate, useRouter } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { LoginForm, RegisterForm } from '@/features/auth/components/auth-forms'
-import { safeRedirect, type AuthMode } from '@/features/auth/search'
+import type { AuthMode } from '@/features/auth/search'
+import { useReturnFocus } from '@/shared/lib/use-return-focus'
 import { cn } from '@/shared/lib/utils'
 import { FacebookIcon, GoogleIcon } from '@/shared/ui/brand-icons'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog'
@@ -34,8 +35,6 @@ const socialButtonClass =
 
 interface AuthDialogProps {
   mode: AuthMode
-  /** Endereço interno para onde ir depois de entrar; sem ele, o diálogo só fecha. */
-  redirect?: string
   /** O diálogo abriu porque a sessão expirou. */
   expired?: boolean
 }
@@ -43,33 +42,37 @@ interface AuthDialogProps {
 /**
  * Login e cadastro. O estado vem da URL (`?auth=`), então o diálogo sobrevive a refresh
  * e fecha com o botão voltar. No mobile ocupa a tela inteira, como nos frames.
+ *
+ * Quando o login dá certo, o diálogo não navega: a sessão passa a existir e o layout raiz,
+ * que o renderiza, leva ao destino pedido ou só limpa os parâmetros da URL.
  */
-export function AuthDialog({ mode, redirect, expired = false }: AuthDialogProps) {
+export function AuthDialog({ mode, expired = false }: AuthDialogProps) {
   const navigate = useNavigate()
-  const router = useRouter()
   const [notice, setNotice] = useState('')
+  const returnFocus = useReturnFocus()
 
+  /** Sai do diálogo sem entrar. Desistir do login também desiste do favorito que o tinha aberto. */
   function close() {
     void navigate({
       to: '.',
-      search: (previous) => ({ ...previous, auth: undefined, redirect: undefined, expired: undefined }),
+      search: (previous) => ({
+        ...previous,
+        auth: undefined,
+        redirect: undefined,
+        expired: undefined,
+        favoritar: undefined,
+      }),
       replace: true,
       resetScroll: false,
     })
   }
 
-  function finish() {
-    const target = safeRedirect(redirect)
-    if (target) {
-      router.history.replace(target)
-    } else {
-      close()
-    }
-  }
-
   return (
     <Dialog open onOpenChange={(open) => !open && close()}>
-      <DialogContent className="md:border-primary px-7 pt-28 pb-10 md:border-b-[10px] md:px-20 md:pt-12 md:pb-16">
+      <DialogContent
+        onCloseAutoFocus={returnFocus}
+        className="md:border-primary px-7 pt-28 pb-10 md:border-b-[10px] md:px-20 md:pt-12 md:pb-16"
+      >
         <p className="mb-24 text-center text-[32px] font-bold tracking-widest md:hidden" aria-hidden="true">
           KURIO
         </p>
@@ -110,7 +113,6 @@ export function AuthDialog({ mode, redirect, expired = false }: AuthDialogProps)
         <div className="mt-6 md:mt-4">
           {mode === 'entrar' ? (
             <LoginForm
-              onSuccess={finish}
               afterPassword={
                 <button
                   type="button"
@@ -122,7 +124,7 @@ export function AuthDialog({ mode, redirect, expired = false }: AuthDialogProps)
               }
             />
           ) : (
-            <RegisterForm onSuccess={finish} />
+            <RegisterForm />
           )}
         </div>
 

@@ -35,12 +35,13 @@ export function PromoBanners() {
       {banners.map((banner) => (
         <article key={banner.title} className="bg-card flex overflow-hidden rounded-lg xl:min-h-[250px]">
           <img
+            // `loading` antes de `src`: ver o comentário em nft-image.tsx.
+            loading="lazy"
+            decoding="async"
             src={banner.image}
             alt=""
             width={640}
             height={640}
-            loading="lazy"
-            decoding="async"
             className="w-[42%] shrink-0 rounded-2xl object-cover xl:w-[287px]"
           />
           <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-3 p-4 text-right xl:py-6 xl:pr-[30px] xl:pl-2">

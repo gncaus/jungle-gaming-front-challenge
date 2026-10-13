@@ -55,5 +55,27 @@ export default defineConfig({
       'tough-cookie': fileURLToPath(new URL('./src/mocks/cookie-store-stub.ts', import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Sem agrupar, o bundler espalha o código comum em muitos chunks pequenos, e cada um
+        // custa uma ida ao servidor. Dois grupos resolvem isso: as bibliotecas usadas em toda
+        // página e o código próprio compartilhado entre a aplicação e o mock (contratos,
+        // sessão, utilitários). O que é carregado sob demanda fica de fora dos dois.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vendor',
+              test: /node_modules[\\/](react|react-dom|scheduler|@tanstack|axios|zod|decimal\.js|lucide-react|clsx|tailwind-merge|class-variance-authority)[\\/]/,
+            },
+            {
+              name: 'common',
+              test: /src[\\/](shared[\\/]lib|features[\\/][^\\/]+[\\/](schemas|session|search)\.ts)/,
+            },
+          ],
+        },
+      },
+    },
+  },
   preview: { port: 4173, strictPort: true },
 })

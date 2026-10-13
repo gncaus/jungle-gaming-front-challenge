@@ -15,6 +15,8 @@ export const authSearchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
   /** O diálogo abriu porque a sessão expirou. */
   expired: z.boolean().optional().catch(undefined),
+  /** NFT que um visitante pediu para favoritar; o pedido é concluído depois do login. */
+  favoritar: z.string().optional().catch(undefined),
 })
 
 /** Só caminhos internos são aceitos como destino, para o parâmetro não virar redirecionamento aberto. */

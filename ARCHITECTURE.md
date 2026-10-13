@@ -66,6 +66,7 @@ Configuração em `src/app/query-client.ts`; chaves e opções de cada consulta 
 | Novas tentativas | Só falha transitória (erro de conexão ou 5xx) é repetida, até 2 vezes, com espera crescente. Erro 4xx não é repetido, porque responderia igual. |
 | Mutations | Nunca são repetidas automaticamente, para não duplicar operações. |
 | Respostas obsoletas | Cada combinação de parâmetros tem sua chave e a requisição recebe o `signal` do Query. Ao mudar um filtro, a consulta anterior é cancelada e, mesmo que responda, não é exibida. |
+| Atualização otimista | Favoritos (ver "Favoritos"). |
 | Tempo real | O evento `nft.updated` invalida as consultas do catálogo, que são refeitas pela API REST. O socket avisa que algo mudou; o estado exibido vem sempre do REST. |
 
 Erros da API chegam à interface como `HttpError` (`src/shared/lib/http.ts`), já no formato do contrato de erro. O interceptor do Axios faz essa conversão em um só lugar.
@@ -144,18 +145,54 @@ Toda resposta de erro tem o mesmo formato (`src/shared/lib/api-error.ts`):
 
 `INSUFFICIENT_STOCK` traz em `details` os itens afetados e o máximo permitido. `QUOTE_STALE` traz a cotação atual.
 
+## Acessibilidade
+
+- **Teclado e foco:** todo controle é alcançável por teclado, com foco visível (contorno em `:focus-visible`). Há um link "Pular para o conteúdo" no topo.
+- **Diálogos e painéis:** usam o Dialog do Radix, que prende o foco e fecha com Esc. Como são montados sob demanda, sem um gatilho que o Radix conheça, `useReturnFocus` devolve o foco a quem os abriu.
+- **Formulários:** todo campo tem rótulo (visível ou só para leitor de tela, quando o layout mostra apenas o placeholder). O erro fica associado ao campo por `aria-describedby`, o campo é marcado com `aria-invalid` e o primeiro campo inválido recebe o foco.
+- **Estados sem depender de cor:** filtro marcado ganha ícone e negrito; favorito muda o rótulo, o preenchimento do ícone e `aria-pressed`; edição esgotada fica riscada e é anunciada como esgotada; "RARO" e "Esgotado" são texto.
+- **Feedback:** uma região `aria-live` única (`Announcer`) recebe o resultado de mutations e, adiante, as mudanças em tempo real. Estados de carregamento e contagem de resultados usam `role="status"`; erros usam `role="alert"`.
+- **Imagens:** as artes têm texto alternativo descritivo; imagens decorativas têm `alt` vazio.
+- **Movimento:** shimmer, transições e rolagem suave são desligados com `prefers-reduced-motion`.
+
 ## Dinheiro
 
 Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmountSchema`, e todo cálculo usa `decimal.js`. Não há `number` para ETH em nenhuma camada. Quantidades são inteiros.
 
 ## Sessão
 
+### Na API simulada
+
 - Login e cadastro devolvem um token, com validade de 30 minutos controlada pelo mock.
 - Token ausente significa visitante. Token inválido ou vencido responde 401 mesmo em rotas que aceitam visitante, para o cliente encerrar a sessão local em vez de seguir como visitante sem perceber.
 - Senhas nunca ficam em claro: o mock guarda sal e hash PBKDF2-SHA256 (Web Crypto, 100.000 iterações), inclusive para os usuários das fixtures.
 - Trocar a senha encerra as outras sessões da conta e mantém a atual.
 
-**Limitação:** o token trafega em header e o cliente o guarda no navegador. Em produção o adequado seria um cookie `HttpOnly`, que um service worker de mock não consegue emitir.
+### No cliente
+
+- **Credenciais:** `src/shared/lib/credentials.ts` é o único lugar que lê e grava o token e o `guestId` do visitante, ambos no `localStorage`. O interceptor do Axios envia os dois em toda chamada.
+- **Recuperação:** ao recarregar, o token guardado é confirmado em `GET /auth/session`. Enquanto a resposta não chega, a sessão está "carregando" e a interface não mostra dados de ninguém.
+- **Login e cadastro:** um diálogo só, aberto por parâmetro de URL (`?auth=entrar` ou `?auth=criar-conta`), válido em qualquer rota. Por estar na URL, sobrevive a refresh e fecha com o botão voltar. No mobile ocupa a tela inteira, como nos frames. O código do diálogo é baixado sob demanda.
+- **Rotas privadas:** usam `requireSession` no `beforeLoad`. Sem sessão, levam à página inicial com o login aberto e `redirect` apontando para o destino. Só caminhos internos são aceitos em `redirect`.
+- **Depois de entrar:** quem decide para onde ir é o layout raiz, em um único lugar: com sessão e pedido de login na URL, segue para `redirect` ou só limpa os parâmetros, ficando na mesma página.
+- **Expiração:** quando a API responde 401 a uma chamada que levou token, `src/app/session.ts` encerra a sessão local e reabre o login com o aviso de sessão expirada. Em rota privada, o endereço atual vira o `redirect`, e o usuário volta para a mesma tela ao entrar de novo. Em página pública, ele nem sai do lugar.
+- **Logout e troca de usuário:** `endSession` apaga o token, gera um `guestId` novo e descarta do cache tudo o que não é catálogo público. A conexão de socket é refeita com a identidade nova (ver "Tempo real").
+- **Outra aba:** login ou logout feito em outra aba é percebido pelo evento `storage`, e esta aba também descarta o cache privado.
+
+### Isolamento entre usuários
+
+- Toda consulta de dado privado tem chave `['private', <id do usuário>, ...]` (`src/shared/lib/query-keys.ts`) e só é feita depois de a sessão dizer de quem é.
+- A sessão em cache é guardada por token, então um token nunca reaproveita o usuário de outro.
+- Ao abrir ou encerrar uma sessão, o cache privado e o de mutations são descartados antes.
+- O catálogo é o único dado mantido na troca de sessão, por ser público. Ele não é apagado porque as telas abertas continuam observando essas consultas, e apagá-las as deixaria sem receber as atualizações em tempo real.
+
+**Limitação:** o token trafega em header e o cliente o guarda no `localStorage`. Em produção o adequado seria um cookie `HttpOnly`, que um service worker de mock não consegue emitir.
+
+## Favoritos
+
+- Só existem para quem tem sessão. O estado vem de `GET /favorites`, com a chave privada do usuário.
+- **Atualização otimista:** favoritar ou desfavoritar muda a tela na hora. Antes, a consulta em andamento é cancelada e o estado anterior é guardado. Se a API falhar, o estado anterior volta e o usuário é avisado; ao final, com sucesso ou erro, a lista é revalidada pela API.
+- **Visitante:** o clique abre o login e deixa o pedido na URL (`?favoritar=<id>`). Com a sessão aberta, o pedido é executado uma vez e o parâmetro sai da URL. Fechar o login sem entrar descarta o pedido.
 
 ## Carrinho
 
@@ -202,7 +239,7 @@ Os dois eventos usam o mesmo envelope (`src/features/realtime/schemas.ts`):
 
 ### Transporte
 
-- O cliente é o `socket.io-client`, aberto em `src/app/socket.ts`, na mesma origem da aplicação e com o caminho `/realtime/`. `src/app/realtime.tsx` mantém a conexão enquanto a aplicação está aberta e liga os eventos ao cache.
+- O cliente é o `socket.io-client`, aberto em `src/app/socket.ts`, na mesma origem da aplicação e com o caminho `/realtime/`. `src/app/realtime.tsx` mantém a conexão enquanto a aplicação está aberta e liga os eventos ao cache. A conexão pertence à sessão: quando o token muda (login, logout, expiração), a conexão anterior é fechada com seus listeners e outra é aberta com a identidade nova. Um evento endereçado ao usuário anterior não tem como chegar a quem entrou depois.
 - O servidor é simulado em `src/mocks/socket/server.ts` com o `ws` do MSW e o `@mswjs/socket.io-binding`, que codifica e decodifica os pacotes do protocolo Socket.IO.
 - A autenticação usa o campo `auth` do Socket.IO: o cliente envia o token da sessão no pacote de conexão e o mock associa a conexão ao usuário.
 
@@ -252,6 +289,19 @@ O layout é escuro e não há tema claro.
 - **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas. A barra de navegação inferior do mobile ainda não foi implementada.
 - **Tela de carregamento:** o `index.html` traz a marca e "Carregando o marketplace…", exibidos até a aplicação iniciar. Não está no layout.
 - **Cards no mobile:** o nome reserva duas linhas, para a grade ter a mesma altura com skeletons e com dados.
+- **Favoritar no card:** o coração fica sempre visível no canto do card. No layout desktop ele aparece ao passar o mouse, junto de carrinho e zoom, o que o esconderia de quem usa teclado ou toque.
+- **Detalhe do NFT:**
+  - O preço exibido é o da edição selecionada, e a edição escolhida vai para a URL (`?edicao=`).
+  - Edição esgotada aparece riscada e desabilitada. A quantidade é limitada pelo estoque e pelo limite por pedido, com a explicação logo abaixo.
+  - No layout, os rótulos "Contrato" e "Direitos autorais" estão trocados em relação aos textos. A aplicação os mostra na ordem coerente.
+  - A aba de avaliações mostra a nota e a contagem, que é o que a API tem; não há lista de comentários.
+  - O ícone de zoom da galeria e "Compartilhar este NFT" ficaram de fora, por serem ações fora do escopo.
+  - No mobile há miniaturas abaixo da imagem, que o frame não mostra, para a galeria funcionar.
+  - Os botões "Comprar" e de carrinho entram com o carrinho.
+- **Login e cadastro:** "Continuar com Google", "Continuar com Facebook" e "Esqueceu a senha?" aparecem como no layout e respondem com um aviso de indisponível.
+- **Com sessão:** o botão "Entrar" do cabeçalho dá lugar ao primeiro nome do usuário, que leva ao perfil, e a um botão de sair. O layout não desenha esse estado.
+- **Navegação inferior do mobile:** por enquanto tem Início, Explorar e Perfil. O layout também mostra favoritos e carrinho.
+- **Avisos:** resultados de ações (como favoritar) e falhas aparecem em um aviso no rodapé da tela, que é também a região `aria-live` da aplicação.
 
 ## Testes
 
@@ -262,7 +312,7 @@ O layout é escuro e não há tema claro.
 - **Testes de interface** (`tests/e2e/*.spec.ts`) rodam nos dois projetos e verificam o que aparece na tela.
 - **Testes de contrato** (`tests/e2e/api/`) rodam só no projeto desktop. Chamam a API com `fetch` de dentro da página, para passar pelo service worker do MSW, e abrem uma rota sem tela para que as consultas da própria aplicação não se misturem às do teste.
 - **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock.
-- **Regressão visual** (`tests/e2e/visual.spec.ts`): as imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
+- **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial e detalhe, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
 
 ## Lighthouse
 
@@ -281,4 +331,8 @@ O mock roda no navegador, então o JavaScript dele faz parte do carregamento de 
 - **Imagens.** WebP em três larguras com `srcset` e `sizes`, dimensões declaradas, carregamento sob demanda abaixo da dobra e prioridade alta só para a arte do topo e a primeira linha de cards.
 - **Fonte** servida da própria origem, com `preload` e `font-display: swap`.
 - **Divisão de código por rota**, feita pelo plugin do router.
-- **Sem deslocamento de layout.** Skeletons têm as dimensões do conteúdo final (CLS 0).
+- **Sem deslocamento de layout.** Skeletons têm as dimensões do conteúdo final (CLS 0). O skeleton do detalhe ocupa a altura da tela, para o rodapé não aparecer e depois ser empurrado.
+- **Bibliotecas e código comum agrupados** em dois arquivos (`vendor` e `common`), em vez de muitos chunks pequenos, cada um com sua ida ao servidor.
+- **Filtros sob demanda.** O slider e o painel lateral não fazem parte da primeira pintura: são baixados à parte, com um lugar reservado do mesmo tamanho.
+- **Seções abaixo da dobra adiadas** com `content-visibility: auto` (banners e Diário da Cunhagem): o navegador só as monta, e baixa suas imagens, quando o usuário se aproxima.
+- **Atributo `loading` antes de `src`.** O React aplica os atributos na ordem em que aparecem, e o navegador começa o download ao receber `src`; com `loading="lazy"` depois, a imagem era baixada na hora.

@@ -17,15 +17,17 @@ export function NftImage({ image, sizes, priority = false, className }: NftImage
 
   return (
     <img
-      src={largest.url}
-      srcSet={image.sources.map((source) => `${source.url} ${source.width}w`).join(', ')}
-      sizes={sizes}
-      width={largest.width}
-      height={largest.width}
-      alt={image.alt}
+      // `loading` vem antes de `src` de propósito: o React aplica os atributos nesta ordem, e o
+      // navegador começa o download ao receber `src`. Depois dele, o "lazy" chegaria tarde.
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
+      sizes={sizes}
+      srcSet={image.sources.map((source) => `${source.url} ${source.width}w`).join(', ')}
+      src={largest.url}
+      width={largest.width}
+      height={largest.width}
+      alt={image.alt}
       className={cn('aspect-square object-cover', className)}
     />
   )

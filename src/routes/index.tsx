@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router'
 import { SlidersHorizontal } from 'lucide-react'
-import { useState } from 'react'
-import { CatalogFilters } from '@/features/catalog/components/catalog-filters'
+import { lazy, Suspense, useState } from 'react'
+import { CatalogFiltersSkeleton } from '@/features/catalog/components/catalog-filters-skeleton'
 import { CatalogToolbar } from '@/features/catalog/components/catalog-toolbar'
 import { Hero } from '@/features/catalog/components/hero'
 import { LimitedOffer } from '@/features/catalog/components/limited-offer'
@@ -16,14 +16,17 @@ import {
 import { Journal } from '@/features/home/components/journal'
 import { PromoBanners } from '@/features/home/components/promo-banners'
 import { Button } from '@/shared/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/shared/ui/sheet'
+
+// Os filtros trazem o slider e o painel lateral, que não são necessários para a primeira
+// pintura: são baixados à parte, com um lugar reservado do mesmo tamanho enquanto isso.
+const CatalogFilters = lazy(() =>
+  import('@/features/catalog/components/catalog-filters').then((module) => ({
+    default: module.CatalogFilters,
+  })),
+)
+const FiltersSheet = lazy(() =>
+  import('@/features/catalog/components/filters-sheet').then((module) => ({ default: module.FiltersSheet })),
+)
 
 export const Route = createFileRoute('/')({
   validateSearch: catalogSearchSchema,
@@ -56,34 +59,21 @@ function HomePage() {
           inputId="mobile-search"
           className="flex-1"
         />
-        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <SheetTrigger asChild>
-            <Button size="icon" className="relative size-11 rounded-lg" aria-label="Abrir filtros">
-              <SlidersHorizontal aria-hidden="true" className="size-5" />
-              {activeFilters > 0 && (
-                <span className="bg-ink text-foreground absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full text-[11px]">
-                  {activeFilters}
-                  <span className="sr-only"> filtros ativos</span>
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right">
-            <SheetHeader>
-              <SheetTitle>Filtros</SheetTitle>
-              <SheetDescription>Coleções, faixa de preço e rede.</SheetDescription>
-            </SheetHeader>
-            <CatalogFilters search={search} onChange={changeFilters} idPrefix="sheet" className="px-5" />
-            <div className="bg-background sticky bottom-0 mt-auto flex gap-3 border-t p-5">
-              <Button variant="outline" className="flex-1" onClick={clearFilters} disabled={activeFilters === 0}>
-                Limpar
-              </Button>
-              <Button className="flex-1" onClick={() => setFiltersOpen(false)}>
-                Ver resultados
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <Button
+          size="icon"
+          className="relative size-11 rounded-lg"
+          aria-label="Abrir filtros"
+          aria-haspopup="dialog"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <SlidersHorizontal aria-hidden="true" className="size-5" />
+          {activeFilters > 0 && (
+            <span className="bg-ink text-foreground absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full text-[11px]">
+              {activeFilters}
+              <span className="sr-only"> filtros ativos</span>
+            </span>
+          )}
+        </Button>
       </div>
 
       <Hero />
@@ -98,18 +88,20 @@ function HomePage() {
         </h2>
 
         <div className="hidden flex-col gap-6 lg:flex">
-          <CatalogFilters
-            search={search}
-            onChange={changeFilters}
-            idPrefix="sidebar"
-            className="bg-card p-5"
-          />
+          <Suspense fallback={<CatalogFiltersSkeleton className="bg-card p-5" />}>
+            <CatalogFilters
+              search={search}
+              onChange={changeFilters}
+              idPrefix="sidebar"
+              className="bg-card p-5"
+            />
+          </Suspense>
           <LimitedOffer />
         </div>
 
         <div>
           <div className="mb-4 hidden justify-end md:flex lg:hidden">
-            <Button variant="outline" onClick={() => setFiltersOpen(true)}>
+            <Button variant="outline" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}>
               <SlidersHorizontal aria-hidden="true" />
               Filtros{activeFilters > 0 && ` (${activeFilters})`}
             </Button>
@@ -125,10 +117,22 @@ function HomePage() {
         </div>
       </section>
 
-      <div className="mt-16 xl:mt-[100px]">
+      {filtersOpen && (
+        <Suspense fallback={null}>
+          <FiltersSheet
+            search={search}
+            activeFilters={activeFilters}
+            onChange={changeFilters}
+            onClear={clearFilters}
+            onClose={() => setFiltersOpen(false)}
+          />
+        </Suspense>
+      )}
+
+      <div className="render-when-near mt-16 xl:mt-[100px]">
         <PromoBanners />
       </div>
-      <div className="mt-16 xl:mt-[100px]">
+      <div className="render-when-near mt-16 xl:mt-[100px]">
         <Journal />
       </div>
     </div>

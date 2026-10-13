@@ -15,3 +15,12 @@ test('página inicial', async ({ page }) => {
 
   await expect(page).toHaveScreenshot('inicio.png', { fullPage: true })
 })
+
+test('detalhe do NFT', async ({ page }) => {
+  await openApp(page, '/nft/emerald-ape-042')
+  await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Mais desta coleção' }).getByRole('article')).toHaveCount(3)
+  await settlePage(page)
+
+  await expect(page).toHaveScreenshot('detalhe.png', { fullPage: true })
+})

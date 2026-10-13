@@ -11,7 +11,7 @@ import sharp from 'sharp'
  * Cada recorte é [esquerda, topo, lado] em fração da imagem original.
  */
 const views = {
-  full: { crop: [0, 0, 1], widths: [320, 640, 1000] },
+  full: { crop: [0, 0, 1], widths: [320, 480, 640, 1000] },
   face: { crop: [0.15, 0.05, 0.7], widths: [320, 640] },
   outfit: { crop: [0.15, 0.3, 0.7], widths: [320, 640] },
   profile: { crop: [0, 0.15, 0.7], widths: [320, 640] },

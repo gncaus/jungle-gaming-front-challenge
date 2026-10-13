@@ -89,7 +89,9 @@ export const scenarios: Record<ScenarioName, ScenarioConfig> = {
   },
   'favorites-failure': {
     ...base,
-    description: 'Favoritar e desfavoritar respondem 500; as consultas funcionam.',
+    description: 'Favoritar e desfavoritar respondem 500 depois de 0,6 s; as consultas funcionam.',
+    // A demora deixa visível a atualização otimista antes de ela ser desfeita.
+    latency: { kind: 'fixed', ms: 600 },
     failure: { kind: 'http-500', pathPrefix: '/favorites', methods: 'mutations', firstAttempts: null },
   },
   'price-changed': {

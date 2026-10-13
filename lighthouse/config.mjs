@@ -5,8 +5,11 @@ export const port = 4174
 
 export const runsPerTarget = 3
 
-/** Páginas auditadas. O detalhe do NFT entra aqui quando a rota existir. */
-export const pages = [{ name: 'inicio', path: '/' }]
+/** Páginas auditadas. */
+export const pages = [
+  { name: 'inicio', path: '/' },
+  { name: 'detalhe', path: '/nft/emerald-ape-042' },
+]
 
 /** `undefined` usa o perfil padrão do Lighthouse (mobile, com throttling simulado). */
 export const profiles = [

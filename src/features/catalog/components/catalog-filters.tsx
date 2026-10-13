@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Check } from 'lucide-react'
+import { CatalogFiltersSkeleton } from '@/features/catalog/components/catalog-filters-skeleton'
 import { PriceRange } from '@/features/catalog/components/price-range'
 import { nftFacetsQueryOptions } from '@/features/catalog/hooks/queries'
 import type { NetworkId } from '@/features/catalog/schemas'
 import type { CatalogFilters as Filters, CatalogSearch } from '@/features/catalog/search'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { Skeleton } from '@/shared/ui/skeleton'
 
 interface CatalogFiltersProps {
   search: CatalogSearch
@@ -71,21 +71,7 @@ export function CatalogFilters({ search, onChange, idPrefix, className }: Catalo
   const { data: facets, error, isPending, refetch } = useQuery(nftFacetsQueryOptions)
 
   if (isPending) {
-    return (
-      <div className={cn('flex flex-col gap-3', className)} aria-busy="true" data-testid="filters-skeleton">
-        <p role="status" className="sr-only">
-          Carregando filtros…
-        </p>
-        <Skeleton className="h-7 w-32" />
-        {Array.from({ length: 9 }, (_, index) => (
-          <Skeleton key={index} className="h-7 w-full" />
-        ))}
-        <Skeleton className="mt-6 h-7 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="mt-6 h-7 w-24" />
-        <Skeleton className="h-28 w-full" />
-      </div>
-    )
+    return <CatalogFiltersSkeleton className={className} />
   }
 
   if (error) {

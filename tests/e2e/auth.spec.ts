@@ -188,6 +188,8 @@ test('diálogo de login prende o foco, fecha com Esc e devolve o foco', async ({
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
   await expect(page).not.toHaveURL(/auth=/)
+  // O foco volta para o link que abriu o diálogo.
+  await expect(page.getByRole('link', { name: 'Entrar' }).filter({ visible: true })).toBeFocused()
 })
 
 test('ações de login fora do escopo avisam que não estão disponíveis', async ({ page, isMobile }) => {

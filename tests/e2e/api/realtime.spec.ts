@@ -128,7 +128,10 @@ test('evento perdido durante a queda não é reentregue; o REST tem o estado atu
   await mockControl(page, 'updateEdition', { nftId, editionId: edition, price: '1.75' })
 
   await mockControl(page, 'setSocketAvailable', true)
-  await expect.poll(async () => (await socketState(page, 'visitante')).connected).toBe(true)
+  // A espera entre tentativas de reconexão cresce a cada falha; dá tempo para a próxima.
+  await expect
+    .poll(async () => (await socketState(page, 'visitante')).connected, { timeout: 15_000 })
+    .toBe(true)
 
   await mockControl(page, 'updateEdition', { nftId: 'golden-beat-207', editionId: edition, available: 5 })
   await expect.poll(async () => summarize(await receivedEvents(page, 'visitante'))).toEqual([

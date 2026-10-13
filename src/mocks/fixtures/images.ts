@@ -5,7 +5,7 @@ export const imageKeys = ['emerald-ape', 'sage-nomad', 'neon-vessel', 'golden-be
 export type ImageKey = (typeof imageKeys)[number]
 
 const viewWidths = {
-  full: [320, 640, 1000],
+  full: [320, 480, 640, 1000],
   face: [320, 640],
   outfit: [320, 640],
   profile: [320, 640],

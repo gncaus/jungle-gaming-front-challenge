@@ -40,24 +40,19 @@ function FormError({ message }: { message?: string }) {
 
 type AuthMutation<Input> = UseMutationResult<unknown, Error, Input>
 
-function submitWith<Values extends FieldValues>(
-  form: UseFormReturn<Values>,
-  mutation: AuthMutation<Values>,
-  onSuccess: () => void,
-) {
+function submitWith<Values extends FieldValues>(form: UseFormReturn<Values>, mutation: AuthMutation<Values>) {
   return form.handleSubmit((values) => {
     if (mutation.isPending) return
-    mutation.mutate(values, { onSuccess, onError: (error) => applyApiError(form, error) })
+    mutation.mutate(values, { onError: (error) => applyApiError(form, error) })
   })
 }
 
 interface LoginFormProps {
-  onSuccess: () => void
   /** Conteúdo entre o campo de senha e o botão (no layout, "Esqueceu a senha?"). */
   afterPassword?: ReactNode
 }
 
-export function LoginForm({ onSuccess, afterPassword }: LoginFormProps) {
+export function LoginForm({ afterPassword }: LoginFormProps) {
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginInputSchema),
     defaultValues: { email: '', password: '' },
@@ -66,7 +61,7 @@ export function LoginForm({ onSuccess, afterPassword }: LoginFormProps) {
   const { errors } = form.formState
 
   return (
-    <form onSubmit={submitWith(form, login, onSuccess)} noValidate className="flex flex-col gap-3">
+    <form onSubmit={submitWith(form, login)} noValidate className="flex flex-col gap-3">
       <FormError message={errors.root?.message} />
       <TextField
         label="E-mail"
@@ -94,7 +89,7 @@ export function LoginForm({ onSuccess, afterPassword }: LoginFormProps) {
   )
 }
 
-export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+export function RegisterForm() {
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerInputSchema),
     defaultValues: { username: '', email: '', password: '', confirmPassword: '' },
@@ -103,7 +98,7 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const { errors } = form.formState
 
   return (
-    <form onSubmit={submitWith(form, register, onSuccess)} noValidate className="flex flex-col gap-3">
+    <form onSubmit={submitWith(form, register)} noValidate className="flex flex-col gap-3">
       <FormError message={errors.root?.message} />
       <TextField
         label="Nome de usuário"

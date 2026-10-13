@@ -112,7 +112,7 @@ function buildNft(seed: NftSeed, index: number): NftRecord {
       `A propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência registrada na rede. ${creator} recebe ${royalty}% de direitos autorais nas vendas secundárias, apoiando novos trabalhos e lançamentos da comunidade.`,
     ],
     attributes: [...imageAttributes[seed.image], seed.rare ? 'Raro' : 'Comum'],
-    rating: { average: 4 + ((index * 3) % 10) / 10, count: 5 + ((index * 7) % 40) },
+    rating: { average: (48 - ((index * 3) % 9)) / 10, count: 19 + ((index * 7) % 40) },
     creator: { name: creator, royaltyPercent: royalty },
     contract: {
       address: `0x${addressSeed.toString(16).padStart(8, '0').toUpperCase()}...${token}E8`,

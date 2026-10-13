@@ -105,6 +105,16 @@
   padding-inline: 1.25rem;
 }
 
+/*
+ * Seções bem abaixo da dobra: o navegador só as monta quando o usuário se aproxima, e as
+ * imagens delas não disputam banda com o que aparece primeiro. A altura estimada reserva o
+ * espaço; depois de montada uma vez, o navegador lembra a altura real.
+ */
+@utility render-when-near {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
 @utility skeleton {
   background: linear-gradient(
     90deg,

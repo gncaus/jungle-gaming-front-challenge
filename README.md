@@ -84,7 +84,7 @@ Escolha um cenário acrescentando `?scenario=<nome>` a qualquer URL, por exemplo
 | `server-error` | Toda requisição responde 500 |
 | `flaky` | As duas primeiras tentativas de cada rota respondem 503; a terceira funciona |
 | `session-expired` | Toda requisição autenticada responde como sessão expirada |
-| `favorites-failure` | Favoritar e desfavoritar falham; as consultas funcionam |
+| `favorites-failure` | Favoritar e desfavoritar falham após 0,6 s; as consultas funcionam |
 | `price-changed` | O preço do primeiro item do carrinho sobe 10% ao confirmar a compra |
 | `sold-out` | A edição do primeiro item esgota ao confirmar a compra |
 | `order-timeout` | O pedido é criado, mas a conexão cai antes da resposta |

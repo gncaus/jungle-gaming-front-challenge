@@ -1,10 +1,12 @@
-import { createRootRoute, Link, Outlet, useRouter } from '@tanstack/react-router'
+import { createRootRoute, Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { lazy, Suspense, useEffect } from 'react'
 import { MobileNav } from '@/app/layout/mobile-nav'
 import { SiteFooter } from '@/app/layout/site-footer'
 import { SiteHeader } from '@/app/layout/site-header'
 import { useToken } from '@/features/auth/hooks/use-session'
 import { authSearchSchema, safeRedirect } from '@/features/auth/search'
+import { PendingFavorite } from '@/features/favorites/components/pending-favorite'
+import { Announcer } from '@/shared/ui/announcer'
 import { Button } from '@/shared/ui/button'
 
 // O diálogo (e o formulário que vem com ele) só é baixado quando alguém vai entrar.
@@ -19,12 +21,15 @@ export const Route = createRootRoute({
 })
 
 function RootLayout() {
-  const { auth, redirect, expired } = Route.useSearch()
-  const navigate = Route.useNavigate()
+  const { auth, redirect, expired, favoritar } = Route.useSearch()
+  // Sem rota de origem: a navegação parte da página atual, e não da raiz.
+  const navigate = useNavigate()
   const router = useRouter()
   const hasSession = useToken() !== null
 
-  // Quem já tem sessão e chega em um link de login segue direto para o destino.
+  // Com sessão, o pedido de login na URL está resolvido: segue para o destino pedido ou só
+  // limpa os parâmetros, ficando na mesma página. Vale tanto para quem acabou de entrar pelo
+  // diálogo quanto para quem chegou por um link de login já autenticado.
   useEffect(() => {
     if (!auth || !hasSession) return
     const target = safeRedirect(redirect)
@@ -54,9 +59,11 @@ function RootLayout() {
       </main>
       <SiteFooter />
       <MobileNav />
+      <Announcer />
+      {favoritar && hasSession && <PendingFavorite nftId={favoritar} />}
       {auth && !hasSession && (
         <Suspense fallback={null}>
-          <AuthDialog mode={auth} redirect={redirect} expired={expired} />
+          <AuthDialog mode={auth} expired={expired} />
         </Suspense>
       )}
     </div>

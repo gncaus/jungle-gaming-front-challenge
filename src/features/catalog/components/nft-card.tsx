@@ -1,14 +1,21 @@
 import { Link } from '@tanstack/react-router'
 import { NftImage } from '@/features/catalog/components/nft-image'
 import type { NftSummary } from '@/features/catalog/schemas'
+import { FavoriteButton } from '@/features/favorites/components/favorite-button'
 import { formatEth } from '@/shared/lib/money'
 import { Skeleton } from '@/shared/ui/skeleton'
 
-const cardImageSizes = '(min-width: 1280px) 258px, (min-width: 768px) 30vw, 45vw'
+const cardImageSizes = '(min-width: 1280px) 258px, (min-width: 768px) 30vw, 42vw'
 
 export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?: boolean }) {
   return (
-    <article className="max-md:even:mt-5">
+    <article className="relative max-md:even:mt-5">
+      <FavoriteButton
+        nftId={nft.id}
+        nftName={nft.name}
+        variant="icon"
+        className="absolute top-2 right-2 z-10"
+      />
       <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="group block rounded-sm">
         <div className="bg-card relative flex aspect-[258/300] items-center justify-center overflow-hidden rounded-[20px] p-1 md:rounded-none">
           <NftImage

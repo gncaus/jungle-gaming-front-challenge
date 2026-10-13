@@ -51,12 +51,13 @@ export function Journal() {
         {articles.map((article) => (
           <li key={article.title} className="bg-card overflow-hidden rounded-lg">
             <img
+              // `loading` antes de `src`: ver o comentário em nft-image.tsx.
+              loading="lazy"
+              decoding="async"
               src={article.image}
               alt=""
               width={640}
               height={640}
-              loading="lazy"
-              decoding="async"
               className="aspect-[268/195] w-full object-cover object-top"
             />
             <div className="flex flex-col gap-2 p-4">
