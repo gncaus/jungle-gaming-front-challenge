@@ -4,11 +4,12 @@ import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { z } from 'zod'
 import { maxQuantityOf, resolveEdition } from '@/features/catalog/components/detail/edition-selection'
+import { AddToCartButton } from '@/features/cart/components/add-to-cart-button'
 import { NftGallery, NftGallerySkeleton } from '@/features/catalog/components/detail/nft-gallery'
 import { NftInfoTabs } from '@/features/catalog/components/detail/nft-info-tabs'
 import { NftRating } from '@/features/catalog/components/detail/nft-rating'
 import { PurchaseOptions } from '@/features/catalog/components/detail/purchase-options'
-import { RelatedNfts } from '@/features/catalog/components/detail/related-nfts'
+import { NftShelf } from '@/features/catalog/components/nft-shelf'
 import { nftDetailQueryOptions } from '@/features/catalog/hooks/queries'
 import type { NftDetail } from '@/features/catalog/schemas'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
@@ -60,6 +61,15 @@ function NftView({ nft }: { nft: NftDetail }) {
   const navigate = Route.useNavigate()
   const [quantity, setQuantity] = useState(1)
   const edition = resolveEdition(nft, edicao)
+  const maxQuantity = maxQuantityOf(edition)
+  // O que vai para o carrinho é a quantidade exibida, já limitada ao que há disponível.
+  const selection = {
+    nftId: nft.id,
+    nftName: nft.name,
+    editionId: edition.id,
+    quantity: Math.max(1, Math.min(quantity, maxQuantity)),
+    unavailable: maxQuantity < 1,
+  }
 
   function changeEdition(editionId: string) {
     setQuantity(1)
@@ -123,9 +133,24 @@ function NftView({ nft }: { nft: NftDetail }) {
               edition={edition}
               quantity={quantity}
               onEditionChange={changeEdition}
-              onQuantityChange={(next) => setQuantity(Math.max(1, Math.min(next, maxQuantityOf(edition))))}
-              actions={<FavoriteButton nftId={nft.id} nftName={nft.name} variant="labeled" />}
+              onQuantityChange={(next) => setQuantity(Math.max(1, Math.min(next, maxQuantity)))}
+              actions={
+                <>
+                  <AddToCartButton {...selection} variant="buy" className="min-w-[130px]" />
+                  <FavoriteButton nftId={nft.id} nftName={nft.name} variant="labeled" />
+                </>
+              }
             />
+          </div>
+
+          <div className="flex items-center gap-3 md:hidden">
+            <AddToCartButton
+              {...selection}
+              variant="buy"
+              label="Comprar NFT"
+              className="h-[60px] flex-1 rounded-full text-base normal-case"
+            />
+            <AddToCartButton {...selection} variant="icon" className="bg-card size-[60px]" />
           </div>
 
           <dl className="text-text-secondary mt-4 flex flex-col gap-2 text-[15px]">
@@ -158,7 +183,7 @@ function NftView({ nft }: { nft: NftDetail }) {
         <NftInfoTabs nft={nft} />
       </div>
       <div className="mt-12 md:mt-[72px]">
-        <RelatedNfts nft={nft} />
+        <NftShelf title="Mais desta coleção" filter={{ collection: [nft.collection.id] }} excludeIds={[nft.id]} />
       </div>
     </article>
   )

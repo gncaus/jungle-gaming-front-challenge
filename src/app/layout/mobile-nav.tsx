@@ -1,6 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { House, ScanLine, User } from 'lucide-react'
 import { useSession } from '@/features/auth/hooks/use-session'
+import { CartLink } from '@/features/cart/components/cart-link'
 import { cn } from '@/shared/lib/utils'
 
 const itemClass = 'flex size-12 items-center justify-center rounded-full transition-colors hover:text-primary-light'
@@ -32,6 +33,10 @@ export function MobileNav() {
       >
         <ScanLine className="size-7" aria-hidden="true" />
       </Link>
+
+      <CartLink
+        className={cn(itemClass, pathname === '/carrinho' ? 'text-primary' : 'text-brand-secondary')}
+      />
 
       {session.status === 'anonymous' ? (
         <Link

@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { AddToCartButton } from '@/features/cart/components/add-to-cart-button'
 import { NftImage } from '@/features/catalog/components/nft-image'
 import type { NftSummary } from '@/features/catalog/schemas'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
@@ -15,6 +16,15 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
         nftName={nft.name}
         variant="icon"
         className="absolute top-2 right-2 z-10"
+      />
+      <AddToCartButton
+        nftId={nft.id}
+        nftName={nft.name}
+        editionId={nft.defaultEditionId}
+        quantity={1}
+        variant="icon"
+        unavailable={nft.soldOut}
+        className="absolute top-14 right-2 z-10 hidden md:flex"
       />
       <Link to="/nft/$nftId" params={{ nftId: nft.id }} className="group block rounded-sm">
         <div className="bg-card relative flex aspect-[258/300] items-center justify-center overflow-hidden rounded-[20px] p-1 md:rounded-none">

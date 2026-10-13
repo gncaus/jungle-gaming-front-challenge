@@ -40,9 +40,11 @@ export function startSession(queryClient: QueryClient, result: AuthResult): void
  */
 export function endSession(queryClient: QueryClient): void {
   knownToken = null
-  setToken(null)
+  // A identidade de visitante é trocada antes de o token sair: as telas reagem à saída do
+  // token e já precisam encontrar o visitante novo, com o carrinho vazio.
   renewGuestId()
   dropPrivateData(queryClient)
+  setToken(null)
 }
 
 /** Se outra aba trocar ou encerrar a sessão, esta descarta o que tinha do usuário anterior. */

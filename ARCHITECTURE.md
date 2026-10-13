@@ -67,7 +67,7 @@ Configuração em `src/app/query-client.ts`; chaves e opções de cada consulta 
 | Mutations | Nunca são repetidas automaticamente, para não duplicar operações. |
 | Respostas obsoletas | Cada combinação de parâmetros tem sua chave e a requisição recebe o `signal` do Query. Ao mudar um filtro, a consulta anterior é cancelada e, mesmo que responda, não é exibida. |
 | Atualização otimista | Favoritos (ver "Favoritos"). |
-| Tempo real | O evento `nft.updated` invalida as consultas do catálogo, que são refeitas pela API REST. O socket avisa que algo mudou; o estado exibido vem sempre do REST. |
+| Tempo real | O evento `nft.updated` invalida as consultas do catálogo, do carrinho e da cotação, que são refeitas pela API REST. O socket avisa que algo mudou; o estado exibido vem sempre do REST. |
 
 Erros da API chegam à interface como `HttpError` (`src/shared/lib/http.ts`), já no formato do contrato de erro. O interceptor do Axios faz essa conversão em um só lugar.
 
@@ -201,6 +201,16 @@ Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmou
 - O item é o par NFT + edição. Cada edição tem preço, estoque e limite por pedido próprios.
 - Cada item informa `available`, `maxQuantity` e `status`. Se o estoque cair abaixo da quantidade no carrinho, o item fica `insufficient-stock` e a cotação é recusada até o ajuste.
 
+### No cliente
+
+- **Uma consulta, dois lugares:** o contador do cabeçalho (e da barra do mobile) e a página do carrinho leem a mesma consulta em cache, com chave privada do dono (`useCart`). O dono é o usuário da sessão ou `guest:<id>`; enquanto a sessão está sendo confirmada, nenhum carrinho é consultado.
+- **Sem atualização otimista:** adicionar, alterar e remover esperam a resposta da API, que devolve o carrinho inteiro, e é essa resposta que vai para o cache. Os controles do item ficam desabilitados enquanto isso. Limites de estoque são validados pela API; a recusa aparece como aviso.
+- **Valores só da cotação:** subtotal, desconto, taxa de rede e total vêm de `POST /quotes`. A cotação é uma consulta cuja chave inclui o conteúdo do carrinho (itens, quantidades e versão de cada NFT) e o cupom; qualquer mudança pede outra.
+- **Cupom na URL** (`/carrinho?cupom=KURIO10`): sobrevive a refresh e segue para o pagamento. Aplicar um cupom é pedir a cotação com ele; se a API recusa, a mensagem vai para o campo e o resumo continua sem desconto. Um cupom inválido que chegue pela URL é sinalizado, com a opção de removê-lo.
+- **Mudanças em tempo real:** `nft.updated` revalida carrinho e cotação. A página compara o carrinho novo com o anterior e avisa, na linha do item e na região `aria-live`, quando o preço mudou ou o estoque ficou abaixo da quantidade. Mudanças feitas pelo próprio usuário não geram aviso.
+- **Estoque insuficiente:** o item mostra quanto ainda é possível levar e oferece o ajuste; o resumo troca os valores por um pedido de ajuste até a cotação voltar a ser possível.
+- **Login e logout:** ao entrar, o mock mescla o carrinho do visitante no da conta e o cache privado é descartado, então a tela recarrega já o carrinho mesclado. Ao sair, a identidade de visitante é trocada antes de as telas reagirem, e o carrinho aparece vazio.
+
 ## Cotação e pedidos
 
 - `POST /quotes` calcula subtotal, desconto do cupom, taxa de rede (uma por rede envolvida) e total a partir dos preços e estoques do momento. O campo `version` é uma impressão digital desses valores.
@@ -256,7 +266,7 @@ Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edi�
 - **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
 - **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
 - **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
-- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas do catálogo que estão em uso.
+- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas de catálogo, carrinho e cotação que estão em uso.
 - **Uma aba por vez.** A interceptação acontece dentro da página, não no service worker. Um evento gerado em uma aba não chega às outras. O banco é compartilhado entre abas (`localStorage`), então a outra aba vê o estado novo na próxima consulta REST.
 - **Identificação na conexão.** O usuário é resolvido quando a conexão abre. Se a sessão expirar depois, a conexão continua recebendo eventos até ser encerrada; cabe ao cliente desconectar no logout e na expiração.
 
@@ -289,7 +299,7 @@ O layout é escuro e não há tema claro.
 - **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas. A barra de navegação inferior do mobile ainda não foi implementada.
 - **Tela de carregamento:** o `index.html` traz a marca e "Carregando o marketplace…", exibidos até a aplicação iniciar. Não está no layout.
 - **Cards no mobile:** o nome reserva duas linhas, para a grade ter a mesma altura com skeletons e com dados.
-- **Favoritar no card:** o coração fica sempre visível no canto do card. No layout desktop ele aparece ao passar o mouse, junto de carrinho e zoom, o que o esconderia de quem usa teclado ou toque.
+- **Ações no card:** o coração fica sempre visível no canto do card e, em telas largas, o botão de carrinho logo abaixo (adiciona uma unidade da edição padrão). No layout desktop eles aparecem ao passar o mouse, junto de um zoom, o que os esconderia de quem usa teclado ou toque. O zoom ficou de fora.
 - **Detalhe do NFT:**
   - O preço exibido é o da edição selecionada, e a edição escolhida vai para a URL (`?edicao=`).
   - Edição esgotada aparece riscada e desabilitada. A quantidade é limitada pelo estoque e pelo limite por pedido, com a explicação logo abaixo.
@@ -297,10 +307,16 @@ O layout é escuro e não há tema claro.
   - A aba de avaliações mostra a nota e a contagem, que é o que a API tem; não há lista de comentários.
   - O ícone de zoom da galeria e "Compartilhar este NFT" ficaram de fora, por serem ações fora do escopo.
   - No mobile há miniaturas abaixo da imagem, que o frame não mostra, para a galeria funcionar.
-  - Os botões "Comprar" e de carrinho entram com o carrinho.
+  - No mobile, "Comprar NFT" e o botão de carrinho ficam no fim das opções de compra, no fluxo da página. No frame eles ficam em uma barra fixa, que disputaria o lugar com a navegação inferior.
 - **Login e cadastro:** "Continuar com Google", "Continuar com Facebook" e "Esqueceu a senha?" aparecem como no layout e respondem com um aviso de indisponível.
 - **Com sessão:** o botão "Entrar" do cabeçalho dá lugar ao primeiro nome do usuário, que leva ao perfil, e a um botão de sair. O layout não desenha esse estado.
-- **Navegação inferior do mobile:** por enquanto tem Início, Explorar e Perfil. O layout também mostra favoritos e carrinho.
+- **Navegação inferior do mobile:** Início, Explorar, Carrinho e Perfil. O ícone de favoritos do layout ficou de fora: o enunciado não pede uma tela de favoritos, e eles já aparecem no card e no detalhe.
+- **Carrinho:**
+  - "Comprar" adiciona a seleção e leva ao carrinho; o botão de carrinho adiciona e fica na página.
+  - Cada linha mostra também a edição, que o frame desktop não mostra, porque o mesmo NFT pode estar no carrinho em edições diferentes.
+  - O desconto aparece como "(-) 0.00 ETH", no mesmo formato dos outros valores; o frame mostra "(-) 00.00".
+  - Com um cupom aplicado, a linha de desconto leva a descrição do cupom e aparece a opção de removê-lo.
+  - O botão "Conectar e finalizar" entra com o pagamento.
 - **Avisos:** resultados de ações (como favoritar) e falhas aparecem em um aviso no rodapé da tela, que é também a região `aria-live` da aplicação.
 
 ## Testes
@@ -312,7 +328,7 @@ O layout é escuro e não há tema claro.
 - **Testes de interface** (`tests/e2e/*.spec.ts`) rodam nos dois projetos e verificam o que aparece na tela.
 - **Testes de contrato** (`tests/e2e/api/`) rodam só no projeto desktop. Chamam a API com `fetch` de dentro da página, para passar pelo service worker do MSW, e abrem uma rota sem tela para que as consultas da própria aplicação não se misturem às do teste.
 - **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock.
-- **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial e detalhe, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
+- **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial, detalhe e carrinho, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
 
 ## Lighthouse
 

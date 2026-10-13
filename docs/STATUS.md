@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 5.
+Atualizado em 13/10/2026, ao fim da fatia 6.
 
 ## Feito
 
@@ -62,13 +62,26 @@ Atualizado em 13/10/2026, ao fim da fatia 5.
 - Lighthouse (mediana de 3): início mobile 92, detalhe mobile 92, ambos desktop 100; acessibilidade, boas práticas e SEO em 100 nos quatro. LCP mobile de 3,2 s nas duas páginas, CLS 0.
 - 148 testes no total, 1 pulado no desktop por ser só do mobile.
 
+**Fatia 6 — carrinho**
+
+- Adicionar pelo detalhe ("Comprar" leva ao carrinho; o botão de carrinho fica na página) e pelo card em telas largas.
+- Página `/carrinho` para visitante e usuário: quantidades com limite, remoção, estados vazio, skeleton e erro.
+- Resumo sempre pela cotação da API; cupom aplicado na URL, com as recusas de inválido, expirado e abaixo do mínimo.
+- Contador de itens no cabeçalho e na barra do mobile, lendo a mesma consulta da página.
+- Mescla do carrinho do visitante ao entrar; carrinho vazio ao sair; isolamento entre usuários.
+- Tempo real no carrinho: mudança de preço avisa e atualiza o resumo; estoque abaixo da quantidade bloqueia o total até o ajuste.
+- A cada conexão do socket, catálogo, carrinho e cotação são reconciliados pela API REST.
+- Regressão visual do carrinho.
+- Lighthouse (mediana de 3): início e detalhe em 90 no mobile e 100 no desktop; os demais em 100.
+- 176 testes no total, 1 pulado no desktop por ser só do mobile.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 6: carrinho (adicionar pelo detalhe e pelo card, quantidades, remoção, cupom, resumo pela cotação, persistência e mescla no login), com o contador no cabeçalho e os botões "Comprar" do detalhe.
+Fatia 7: pagamento (`/pagamento`, rota privada), com carteira e rede, revisão, criação idempotente do pedido, bloqueio com cotação desatualizada, pedido pendente recuperável e a confirmação com o recibo. Inclui o botão "Conectar e finalizar" do carrinho.
 
 ## Decisões
 
@@ -91,14 +104,16 @@ Fatia 6: carrinho (adicionar pelo detalhe e pelo card, quantidades, remoção, c
 - O diálogo de login vive na URL (`?auth=`), e o favorito pedido por um visitante também (`?favoritar=`).
 - A edição escolhida no detalhe vive na URL (`?edicao=`); a quantidade é estado local.
 
+- O carrinho não usa atualização otimista: o total depende da cotação, então a tela espera a API.
+- O cupom aplicado vive na URL do carrinho (`?cupom=`).
+- Sem tela de favoritos; a barra do mobile tem Início, Explorar, Carrinho e Perfil.
+
 ## Pendências
 
-- **Lighthouse mobile:** 92 nas duas páginas, com pouca folga sobre a meta de 90; o LCP (3,2 s) depende de a API simulada responder. Medir de novo a cada fatia. Ainda há o que cortar: zod responde por cerca de 40 KB comprimidos do bundle comum.
+- **Lighthouse mobile:** 90 nas duas páginas, sem folga sobre a meta (era 92 antes do carrinho, que acrescentou código e uma consulta em toda página). Precisa de uma rodada de otimização antes da entrega: zod responde por cerca de 40 KB comprimidos do bundle comum, e o LCP (3,3 s) depende de a API simulada responder.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
-- **Navegação inferior do mobile:** falta o carrinho (fatia 6). O ícone de favoritos do layout depende de decidir se haverá uma tela de favoritos, que o enunciado não pede.
-- **Cabeçalho:** falta o carrinho com contador (fatia 6). No mobile não há cabeçalho; a navegação é a barra inferior.
-- **Detalhe e card:** faltam os botões "Comprar" e de carrinho (fatia 6).
+- **Carrinho:** falta o botão "Conectar e finalizar" (fatia 7).
 - **Perfil:** só leitura; edição, avatar, senha e carteiras são a fatia 9.
-- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial ou o detalhe.
-- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` invalida o catálogo, a conexão é autenticada e cada conexão reconcilia o catálogo pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated`.
+- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe ou o carrinho. Falta a baseline do pagamento.
+- **Tempo real no cliente (fatia 8):** hoje `nft.updated` invalida catálogo, carrinho e cotação, a conexão é autenticada e cada conexão reconcilia pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated`.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

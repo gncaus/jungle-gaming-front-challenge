@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { openApp } from './support/api'
+import { expectTotals, figmaCart, seedCart } from './support/cart'
 import { expectResults } from './support/catalog'
 import { settlePage } from './support/visual'
 
@@ -23,4 +24,15 @@ test('detalhe do NFT', async ({ page }) => {
   await settlePage(page)
 
   await expect(page).toHaveScreenshot('detalhe.png', { fullPage: true })
+})
+
+test('carrinho', async ({ page }) => {
+  await openApp(page, '/carrinho')
+  await seedCart(page, figmaCart)
+  await page.reload()
+  await expectTotals(page, { subtotal: '26.83', total: '26.846' })
+  await expect(page.getByRole('region', { name: 'Colecionadores também viram' }).getByRole('article')).toHaveCount(4)
+  await settlePage(page)
+
+  await expect(page).toHaveScreenshot('carrinho.png', { fullPage: true })
 })

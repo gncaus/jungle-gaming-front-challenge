@@ -2,6 +2,7 @@ import { Link, useLocation, useSearch } from '@tanstack/react-router'
 import { Search, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { AccountMenu } from '@/app/layout/account-menu'
+import { CartLink } from '@/features/cart/components/cart-link'
 import { SearchForm } from '@/features/catalog/components/search-form'
 import { cn } from '@/shared/lib/utils'
 
@@ -84,6 +85,7 @@ export function SiteHeader() {
           >
             {searchOpen ? <X aria-hidden="true" /> : <Search aria-hidden="true" />}
           </button>
+          <CartLink className="hover:text-primary-light size-11 rounded-sm" />
           <AccountMenu />
         </div>
       </div>
