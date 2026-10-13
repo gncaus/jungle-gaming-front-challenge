@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 8.
+Atualizado em 13/10/2026, ao fim da fatia 9.
 
 ## Feito
 
@@ -96,13 +96,22 @@ Atualizado em 13/10/2026, ao fim da fatia 8.
 - O mock recusa conexões com erro quando o socket está fora do ar, o que corrigiu uma reconexão que às vezes levava 20 s (teste intermitente).
 - 214 testes no total, 1 pulado no desktop por ser só do mobile.
 
+**Fatia 9 — perfil e carteiras**
+
+- Área do colecionador com navegação lateral (faixa de abas no mobile): `/perfil` e `/perfil/carteiras`.
+- Edição dos dados com validação por campo e conflito vindo da API; o cabeçalho reflete o nome novo.
+- Avatar: envio (reduzido para 256 px no navegador), remoção e recusa de arquivo que não é imagem.
+- Troca de senha com conferência da senha atual pela API.
+- Carteiras principal e secundária: cadastro, resumo, edição e "Igual à carteira principal".
+- 224 testes no total, 1 pulado no desktop por ser só do mobile.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 9: perfil (edição de dados, avatar e senha) e tela de Carteiras (principal e secundária). O backend simulado e o formulário de carteira já existem.
+Fatia 10: fechamento — rodada de otimização do Lighthouse mobile e relatórios versionados, revisão de acessibilidade e mobile, conferência dos 12 cenários do enunciado, documentação final e deploy.
 
 ## Decisões
 
@@ -136,10 +145,12 @@ Fatia 9: perfil (edição de dados, avatar e senha) e tela de Carteiras (princip
 - `nft.updated` só invalida consultas (o estado vem do REST); `order.updated` grava o pedido do evento no cache, porque é ele que confirma a compra.
 - A consulta periódica do pedido é reserva para socket fora do ar, não o caminho normal.
 
+- Dados do perfil e senha são dois formulários, cada um com seu botão; o layout tem um só "Salvar".
+- O avatar é gravado na hora, fora do "Salvar".
+
 ## Pendências
 
 - **Lighthouse mobile:** 90 nas duas páginas, sem folga sobre a meta (era 92 antes do carrinho, que acrescentou código e uma consulta em toda página). Precisa de uma rodada de otimização antes da entrega: zod responde por cerca de 40 KB comprimidos do bundle comum, e o LCP (3,3 s) depende de a API simulada responder.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
-- **Perfil:** só leitura; edição, avatar e senha são a fatia 9, assim como a tela de Carteiras (o formulário já existe, usado no pagamento).
 - **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe, o carrinho ou o pagamento.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

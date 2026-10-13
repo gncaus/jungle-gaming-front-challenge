@@ -1,65 +1,21 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useLogout } from '@/features/auth/hooks/use-session'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { requireSession } from '@/features/auth/search'
-import { useProfile } from '@/features/profile/hooks/use-profile'
-import { Button } from '@/shared/ui/button'
-import { Skeleton } from '@/shared/ui/skeleton'
+import { ProfileNav } from '@/features/profile/components/profile-nav'
 
 export const Route = createFileRoute('/perfil')({
   staticData: { requiresAuth: true },
   beforeLoad: requireSession,
-  component: ProfilePage,
+  component: AccountLayout,
 })
 
-function ProfilePage() {
-  const navigate = useNavigate()
-  const { data: profile, error, isPending, refetch } = useProfile()
-  const logout = useLogout()
-
-  function leave() {
-    logout.mutate(undefined, { onSettled: () => void navigate({ to: '/' }) })
-  }
-
+/** Área do colecionador: a navegação fica fixa e cada seção é uma rota filha. */
+function AccountLayout() {
   return (
-    <section className="page-container py-10" aria-labelledby="profile-title">
-      <h1 id="profile-title" className="text-heading-sm font-bold">
-        Perfil do colecionador
-      </h1>
-
-      {isPending && (
-        <div className="mt-6 flex flex-col gap-3" aria-busy="true">
-          <p role="status" className="sr-only">
-            Carregando perfil…
-          </p>
-          <Skeleton className="h-6 w-64 max-w-full" />
-          <Skeleton className="h-6 w-56 max-w-full" />
-          <Skeleton className="h-6 w-72 max-w-full" />
-        </div>
-      )}
-
-      {error && (
-        <div role="alert" className="mt-6 flex flex-col items-start gap-3">
-          <p className="text-sm">Não foi possível carregar o perfil. {error.message}</p>
-          <Button variant="outline" onClick={() => void refetch()}>
-            Tentar novamente
-          </Button>
-        </div>
-      )}
-
-      {profile && (
-        <dl className="mt-6 grid max-w-xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[180px_1fr]">
-          <dt className="text-text-secondary">Nome de exibição</dt>
-          <dd>{profile.displayName}</dd>
-          <dt className="text-text-secondary">Nome de usuário</dt>
-          <dd>{profile.username}</dd>
-          <dt className="text-text-secondary">E-mail</dt>
-          <dd>{profile.email}</dd>
-        </dl>
-      )}
-
-      <Button variant="outline" className="mt-8" onClick={leave} disabled={logout.isPending}>
-        {logout.isPending ? 'Saindo…' : 'Sair'}
-      </Button>
-    </section>
+    <div className="page-container grid gap-7 py-6 md:grid-cols-[220px_minmax(0,1fr)] md:py-8 lg:grid-cols-[310px_minmax(0,1fr)]">
+      <ProfileNav />
+      <div className="min-w-0">
+        <Outlet />
+      </div>
+    </div>
   )
 }

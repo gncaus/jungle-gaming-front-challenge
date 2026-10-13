@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { mockControl, openApp, users } from './support/api'
 import {
   authDialog,
@@ -10,6 +10,9 @@ import {
   storedToken,
   submitLogin,
 } from './support/session'
+
+/** O e-mail no formulário do perfil identifica de quem são os dados na tela. */
+const profileEmail = (page: Page) => page.getByRole('main').getByLabel('E-mail')
 
 test('login recusa senha errada, entra com a certa e a sessão sobrevive a refresh', async ({
   page,
@@ -69,7 +72,7 @@ test('cadastro valida os campos, trata conflito e cria a conta', async ({ page, 
   await expectSignedIn(page, isMobile)
 
   await page.goto('/perfil')
-  await expect(page.getByText('carla@kurio.test')).toBeVisible()
+  await expect(profileEmail(page)).toHaveValue('carla@kurio.test')
 })
 
 test('rota privada sem sessão leva ao login e volta ao destino depois de entrar', async ({ page }) => {
@@ -83,26 +86,26 @@ test('rota privada sem sessão leva ao login e volta ao destino depois de entrar
 
   await expect(page).toHaveURL('/perfil')
   await expect(page.getByRole('heading', { level: 1, name: 'Perfil do colecionador' })).toBeVisible()
-  await expect(page.getByText('ana@kurio.test')).toBeVisible()
+  await expect(profileEmail(page)).toHaveValue('ana@kurio.test')
 })
 
 test('sessão que expira em rota privada reabre o login e retoma a tela', async ({ page, isMobile }) => {
   await openApp(page)
   await signIn(page, isMobile, users.ana)
   await profileLink(page, isMobile).click()
-  await expect(page.getByText('ana@kurio.test')).toBeVisible()
+  await expect(profileEmail(page)).toHaveValue('ana@kurio.test')
 
   await mockControl(page, 'expireSessions')
   await page.reload()
 
   await expect(authDialog(page)).toBeVisible()
   await expect(authDialog(page).getByText('Sua sessão expirou. Entre novamente para continuar.')).toBeVisible()
-  await expect(page.getByText('ana@kurio.test')).toBeHidden()
+  await expect(profileEmail(page)).toBeHidden()
   expect(await storedToken(page)).toBeNull()
 
   await submitLogin(page, users.ana)
   await expect(page).toHaveURL('/perfil')
-  await expect(page.getByText('ana@kurio.test')).toBeVisible()
+  await expect(profileEmail(page)).toHaveValue('ana@kurio.test')
 })
 
 test('sessão que expira em página pública pede login sem tirar o usuário do lugar', async ({
@@ -135,7 +138,7 @@ test('logout e troca de usuário não deixam nada do usuário anterior', async (
   const guestBefore = await page.evaluate(() => localStorage.getItem('kurio.guest.id'))
 
   await profileLink(page, isMobile).click()
-  await expect(page.getByText('ana@kurio.test')).toBeVisible()
+  await expect(profileEmail(page)).toHaveValue('ana@kurio.test')
 
   await page.getByRole('main').getByRole('button', { name: 'Sair' }).click()
   await expect(page).toHaveURL('/')
@@ -145,14 +148,13 @@ test('logout e troca de usuário não deixam nada do usuário anterior', async (
 
   // Voltar no histórico não reabre o perfil de quem saiu.
   await page.goBack()
-  await expect(page.getByText('ana@kurio.test')).toBeHidden()
+  await expect(profileEmail(page)).toBeHidden()
   await expect(authDialog(page)).toBeVisible()
 
   await submitLogin(page, users.bruno)
   await expect(page).toHaveURL('/perfil')
-  await expect(page.getByText('bruno@kurio.test')).toBeVisible()
-  await expect(page.getByText('Ana Ribeiro')).toHaveCount(0)
-  await expect(page.getByText('ana@kurio.test')).toHaveCount(0)
+  await expect(profileEmail(page)).toHaveValue('bruno@kurio.test')
+  await expect(page.getByRole('main').getByLabel('Nome de exibição')).toHaveValue('Bruno Tavares')
   expect(await storedToken(page)).not.toBe(anaToken)
 })
 

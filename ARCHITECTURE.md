@@ -44,6 +44,7 @@ Regra de dependência: componentes usam hooks, hooks usam funções de `api/`, e
 - Rotas por arquivo com divisão automática de código por rota (`autoCodeSplitting`).
 - `routeTree.gen.ts` é gerado pelo plugin e versionado, para que `npm run typecheck` funcione em um checkout limpo sem rodar o Vite antes.
 - Rota inexistente é tratada pelo `notFoundComponent` da rota raiz, inclusive em acesso direto pela URL.
+- `/perfil` é uma rota de layout: a navegação da área do colecionador fica nela, e `/perfil` (dados) e `/perfil/carteiras` são rotas filhas. A proteção por sessão está no `beforeLoad` do layout e vale para as duas.
 
 ### Catálogo na URL
 
@@ -236,6 +237,14 @@ O pagamento (`/pagamento`) e o pedido (`/pedido/<id>`) são rotas privadas.
 - **Recusa:** mostra o motivo; o carrinho fica intacto e dá para tentar de novo, o que cria outro pedido.
 - **Sessão expirada no meio:** o login reabre e devolve o usuário ao pagamento. Carrinho e carteira estão no servidor e o cupom está na URL, então nada se perde.
 
+## Perfil e carteiras
+
+- **Dados do perfil:** o formulário usa o mesmo schema que a API valida (`profileInputSchema`). Erros de regra aparecem antes do envio; conflito de e-mail ou de nome de usuário volta da API por campo e o primeiro campo com erro recebe o foco. A resposta vai para o cache do perfil, e a sessão é consultada de novo para o cabeçalho mostrar o nome novo.
+- **Avatar:** a imagem escolhida é recortada em um quadrado de 256 px e convertida para JPEG no navegador (`src/features/profile/avatar-image.ts`) antes de ir à API como data URL, o que a mantém dentro do limite de 220 KB do contrato. Arquivo que não é PNG, JPEG ou WebP é recusado na tela. Troca e remoção são gravadas na hora, sem depender do botão "Salvar".
+- **Senha:** formulário próprio. A API confere a senha atual; se a troca der certo, a sessão atual continua e as outras sessões da conta são encerradas. A senha só existe no mock como hash com salt.
+- **Carteiras:** principal e secundária usam o mesmo formulário e o mesmo contrato do pagamento. Uma carteira salva aparece como resumo (apelido, rede, endereço abreviado, tipo e conexão) e abre para edição. "Igual à carteira principal" preenche o cadastro da secundária com os dados da principal, que podem ser ajustados antes de salvar. Trocar o endereço ou o tipo de uma carteira a desconecta, e o pagamento pede a conexão de novo.
+- Tudo é gravado no banco simulado e permanece após refresh. As consultas levam o id do usuário na chave e são descartadas na troca de sessão.
+
 ## Tempo real
 
 ### Eventos
@@ -337,6 +346,12 @@ O layout é escuro e não há tema claro.
 - **Login e cadastro:** "Continuar com Google", "Continuar com Facebook" e "Esqueceu a senha?" aparecem como no layout e respondem com um aviso de indisponível.
 - **Com sessão:** o botão "Entrar" do cabeçalho dá lugar ao primeiro nome do usuário, que leva ao perfil, e a um botão de sair. O layout não desenha esse estado.
 - **Navegação inferior do mobile:** Início, Explorar, Carrinho e Perfil. O ícone de favoritos do layout ficou de fora: o enunciado não pede uma tela de favoritos, e eles já aparecem no card e no detalhe.
+- **Perfil e carteiras:**
+  - O layout tem um único botão "Salvar" para os dados e a senha. A aplicação tem dois formulários, cada um com seu botão, para que um erro na senha não se confunda com o salvamento dos dados.
+  - O campo "Nome ENS" é um campo de texto com a indicação "sem o .eth"; o layout mostra um seletor de sufixo com uma única opção.
+  - "Atividade", "Lista de interesse", "Ofertas", "Arquivos baixados" e "Suporte" aparecem na navegação lateral, desabilitados e anunciados como "em breve".
+  - Sem frame mobile: a navegação lateral vira uma faixa com "Dados do perfil", "Carteiras" e "Sair", e os formulários passam a uma coluna.
+  - Na tela de carteiras, a carteira salva aparece como resumo com "Editar"; o layout só desenha o formulário aberto.
 - **Carrinho:**
   - "Comprar" adiciona a seleção e leva ao carrinho; o botão de carrinho adiciona e fica na página.
   - Cada linha mostra também a edição, que o frame desktop não mostra, porque o mesmo NFT pode estar no carrinho em edições diferentes.
