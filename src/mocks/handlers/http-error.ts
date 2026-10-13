@@ -21,6 +21,9 @@ export class MockApiError extends Error {
   }
 }
 
+/** Derruba a conexão em vez de responder, como em um timeout de rede. */
+export class MockNetworkError extends Error {}
+
 /** Valida uma entrada com o schema do contrato; falha vira 422 com os erros por campo. */
 export function parseInput<Schema extends z.ZodType>(schema: Schema, data: unknown): z.output<Schema> {
   const result = schema.safeParse(data)

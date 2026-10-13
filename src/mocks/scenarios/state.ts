@@ -2,6 +2,7 @@ import { scenarios, type Failure, type ScenarioConfig } from '@/mocks/scenarios/
 import { isScenarioName, type ScenarioName } from '@/mocks/scenarios/names'
 
 const storageKey = 'kurio.mock.scenario'
+const firedKey = 'kurio.mock.scenario.fired'
 const latencySeed = 20260729
 
 /** Contadores por carregamento de página; zerados a cada troca de cenário. */
@@ -34,6 +35,7 @@ export function getScenario(): ScenarioConfig {
 
 export function setScenario(name: ScenarioName): void {
   localStorage.setItem(storageKey, name)
+  localStorage.removeItem(firedKey)
   attempts = new Map()
   randomState = latencySeed
 }
@@ -68,4 +70,15 @@ export function failureFor(method: string, path: string): Failure | null {
     return null
   }
   return failure
+}
+
+/**
+ * Efeitos que acontecem uma única vez por cenário. O registro fica no storage para
+ * não se repetir depois de um refresh; trocar de cenário (ou resetar) o limpa.
+ */
+export function fireOnce(effect: string): boolean {
+  const fired = JSON.parse(localStorage.getItem(firedKey) ?? '[]') as string[]
+  if (fired.includes(effect)) return false
+  localStorage.setItem(firedKey, JSON.stringify([...fired, effect]))
+  return true
 }

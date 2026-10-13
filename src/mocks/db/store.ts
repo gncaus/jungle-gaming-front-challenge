@@ -34,9 +34,12 @@ export function readDb(): DbState {
 /** Aplica uma alteração e grava o estado inteiro, para sobreviver a refresh. */
 export function updateDb<T>(change: (state: DbState) => T): T {
   const state = readDb()
-  const result = change(state)
-  localStorage.setItem(storageKey, JSON.stringify(state))
-  return result
+  try {
+    return change(state)
+  } finally {
+    // Grava mesmo se a alteração falhar no meio: memória e storage nunca divergem.
+    localStorage.setItem(storageKey, JSON.stringify(state))
+  }
 }
 
 export function resetDb(): void {

@@ -3,6 +3,7 @@ import type { StockConflict } from '@/features/cart/schemas'
 import type { Quote } from '@/features/checkout/schemas'
 import type { CouponRecord, DbState } from '@/mocks/db/types'
 import { toCart } from '@/mocks/domain/cart'
+import { fingerprint } from '@/mocks/domain/hash'
 import { networks } from '@/mocks/fixtures/collections'
 import { MockApiError } from '@/mocks/handlers/http-error'
 import { toEthAmount } from '@/shared/lib/money'
@@ -22,16 +23,6 @@ function findCoupon(state: DbState, code: string, subtotal: Decimal): CouponReco
     )
   }
   return coupon
-}
-
-/** FNV-1a de 32 bits: basta para identificar se dois conjuntos de valores são iguais. */
-function fingerprint(value: unknown): string {
-  let hash = 0x811c9dc5
-  for (const char of JSON.stringify(value)) {
-    hash ^= char.codePointAt(0) ?? 0
-    hash = Math.imul(hash, 0x01000193)
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 /**

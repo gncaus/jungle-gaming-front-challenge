@@ -49,6 +49,8 @@ export const authHandlers = [
         username: input.username,
         email: input.email.toLowerCase(),
         displayName: input.username,
+        ensName: '',
+        walletNickname: '',
         avatarUrl: null,
         password,
       }

@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse, type HttpHandler, type JsonBodyType } from 'msw'
 import type { z } from 'zod'
-import { MockApiError, parseInput } from '@/mocks/handlers/http-error'
+import { settleDueOrders } from '@/mocks/domain/orders'
+import { MockApiError, MockNetworkError, parseInput } from '@/mocks/handlers/http-error'
 import { failureFor, latencyFor } from '@/mocks/scenarios/state'
 import type { ApiError } from '@/shared/lib/api-error'
 
@@ -69,6 +70,7 @@ export function route<Body extends JsonBodyType>(
     }
 
     try {
+      settleDueOrders()
       const result = await resolver(context)
       if (result === null) {
         return new HttpResponse(null, { status: 204 })
@@ -80,6 +82,9 @@ export function route<Body extends JsonBodyType>(
     } catch (error) {
       if (error instanceof MockApiError) {
         return HttpResponse.json(error.body, { status: error.status })
+      }
+      if (error instanceof MockNetworkError) {
+        return HttpResponse.error()
       }
       throw error
     }

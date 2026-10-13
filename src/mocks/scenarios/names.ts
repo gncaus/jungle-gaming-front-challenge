@@ -10,6 +10,11 @@ export const scenarioNames = [
   'flaky',
   'session-expired',
   'favorites-failure',
+  'price-changed',
+  'sold-out',
+  'order-timeout',
+  'payment-declined',
+  'wallet-rejected',
 ] as const
 
 export type ScenarioName = (typeof scenarioNames)[number]

@@ -30,9 +30,10 @@ src/
   routes/       rotas por arquivo (a árvore em routeTree.gen.ts é gerada pelo plugin)
   features/<x>/ api (Axios), hooks (Query), components e schemas (zod) de cada domínio
   shared/       ui (shadcn adaptado) e lib (http, utilitários)
-  mocks/        tudo o que é simulado: handlers e, adiante, banco, fixtures e cenários
-tests/e2e/      Playwright
+  mocks/        tudo o que é simulado: fixtures, banco, regras de negócio, handlers e cenários
+tests/e2e/      Playwright (api/ testa os contratos; support/ tem os utilitários)
 lighthouse/     configuração e script da auditoria
+scripts/        geração das imagens otimizadas
 ```
 
 Regra de dependência: componentes usam hooks, hooks usam funções de `api/`, e só `api/` conhece o Axios. Nada fora de `src/mocks/` contém dado fictício.
@@ -49,6 +50,98 @@ Regra de dependência: componentes usam hooks, hooks usam funções de `api/`, e
 - A ativação é por configuração: ligada por padrão, desligada com `VITE_ENABLE_MOCKS=false`. O módulo de mocks é carregado por `import()` dinâmico, fora do bundle principal.
 - `src/main.tsx` aguarda o worker iniciar antes do primeiro render. Sem isso, as primeiras consultas escapariam do mock.
 - Os mocks ficam ligados também no build de produção, que é o que vai para a demonstração publicada.
+
+### Organização dos mocks
+
+```
+src/mocks/
+  fixtures/   dados iniciais: 36 NFTs, 2 usuários, 3 cupons, coleções, redes e imagens
+  db/         estado em memória gravado no localStorage, semente e reset
+  domain/     regras de negócio simuladas: catálogo, carrinho, cotação, pedidos, sessão, senha
+  handlers/   uma rota por operação; `route.ts` aplica cenário, latência e contrato de erro
+  scenarios/  cenários selecionáveis e o estado do cenário ativo
+  control.ts  `window.__mockControl`, para testes e demonstração
+```
+
+- **Persistência:** o banco inteiro é gravado no `localStorage` a cada alteração, então sobrevive a refresh. `schemaVersion` descarta estados gravados em um formato antigo.
+- **Reset:** `window.__mockControl.reset()` restaura a semente e o cenário padrão. Sessões, carrinhos, pedidos e alterações de catálogo voltam ao estado inicial.
+- **Relógio:** expiração de sessão, validade de cupom e resolução de pedido leem `Date.now()` da página, que os testes controlam com `page.clock`.
+- **Determinismo:** ids vêm de um contador (`ord_3`), a latência variável usa um gerador com semente fixa e o hash de transação é derivado do id do pedido.
+
+### Cenários
+
+O cenário ativo é escolhido por `?scenario=<nome>` na URL ou por `window.__mockControl.setScenario('<nome>')`. A escolha fica no `localStorage` e vale até ser trocada ou até o reset. A lista com o efeito de cada um está no README.
+
+Cada cenário é um objeto de configuração (`scenarios/config.ts`) que a camada de rotas consulta. Não existe ramo de cenário em componente, hook ou Axios.
+
+## Contratos REST
+
+Todos os contratos são schemas zod em `src/features/<feature>/schemas.ts`. Os handlers do mock tipam suas respostas com os mesmos tipos e validam as entradas com os mesmos schemas que a interface usa.
+
+Base: `/api`. Autenticação: `Authorization: Bearer <token>`. Visitante: `X-Guest-Id: <uuid>`.
+
+| Recurso | Operação | Acesso |
+| --- | --- | --- |
+| Sessão | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | público |
+| | `GET /auth/session` | autenticado |
+| NFTs | `GET /nfts`, `GET /nfts/facets`, `GET /nfts/:id` | público |
+| Favoritos | `GET /favorites`, `PUT /favorites/:nftId`, `DELETE /favorites/:nftId` | autenticado |
+| Carrinho | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:itemId`, `DELETE /cart/items/:itemId` | visitante ou autenticado |
+| Cotação | `POST /quotes` | visitante ou autenticado |
+| Pedidos | `POST /orders` (header `Idempotency-Key`), `GET /orders`, `GET /orders/:id` | autenticado |
+| Perfil | `GET /profile`, `PATCH /profile`, `PUT /profile/avatar`, `DELETE /profile/avatar`, `PUT /profile/password` | autenticado |
+| Carteiras | `GET /wallets`, `PUT /wallets/:slot`, `POST /wallets/:slot/connect`, `POST /wallets/:slot/disconnect` | autenticado |
+
+`GET /nfts` aceita `q`, `collection` e `network` (repetíveis), `minPrice`, `maxPrice`, `tab` (`all`, `new`, `trending`), `sort` (`recent`, `price-asc`, `price-desc`, `name`), `page` e `pageSize`. A busca ignora acentos e maiúsculas e olha nome, id do token e coleção.
+
+### Erros
+
+Toda resposta de erro tem o mesmo formato (`src/shared/lib/api-error.ts`):
+
+```json
+{ "code": "VALIDATION_ERROR", "message": "Revise os campos destacados.", "fields": { "email": "Informe um e-mail válido" } }
+```
+
+| Situação | Status | Códigos |
+| --- | --- | --- |
+| Validação | 422 | `VALIDATION_ERROR` (com `fields`), `COUPON_INVALID`, `COUPON_EXPIRED` |
+| Sessão inválida | 401 | `UNAUTHENTICATED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS` |
+| Falta de permissão | 403 | `FORBIDDEN` (ex.: pedido de outro usuário) |
+| Recurso inexistente | 404 | `NOT_FOUND` |
+| Conflito | 409 | `ACCOUNT_CONFLICT` (com `fields`), `INSUFFICIENT_STOCK`, `QUOTE_STALE`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_CONNECTED`, `WALLET_REJECTED` |
+| Falha transitória | 500, 503 ou erro de rede | `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE` |
+
+`INSUFFICIENT_STOCK` traz em `details` os itens afetados e o máximo permitido. `QUOTE_STALE` traz a cotação atual.
+
+## Dinheiro
+
+Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmountSchema`, e todo cálculo usa `decimal.js`. Não há `number` para ETH em nenhuma camada. Quantidades são inteiros.
+
+## Sessão
+
+- Login e cadastro devolvem um token, com validade de 30 minutos controlada pelo mock.
+- Token ausente significa visitante. Token inválido ou vencido responde 401 mesmo em rotas que aceitam visitante, para o cliente encerrar a sessão local em vez de seguir como visitante sem perceber.
+- Senhas nunca ficam em claro: o mock guarda sal e hash PBKDF2-SHA256 (Web Crypto, 100.000 iterações), inclusive para os usuários das fixtures.
+- Trocar a senha encerra as outras sessões da conta e mantém a atual.
+
+**Limitação:** o token trafega em header e o cliente o guarda no navegador. Em produção o adequado seria um cookie `HttpOnly`, que um service worker de mock não consegue emitir.
+
+## Carrinho
+
+- O carrinho é sempre um recurso REST, também para o visitante. O cliente gera um `guestId`, guarda no `localStorage` e o envia em `X-Guest-Id`; o mock guarda os carrinhos por dono (`guest:<id>` ou `user:<id>`).
+- No login e no cadastro, o mock passa os itens do visitante para o carrinho do usuário, somando quantidades do mesmo NFT e edição até o limite disponível, e apaga o carrinho do visitante.
+- O item é o par NFT + edição. Cada edição tem preço, estoque e limite por pedido próprios.
+- Cada item informa `available`, `maxQuantity` e `status`. Se o estoque cair abaixo da quantidade no carrinho, o item fica `insufficient-stock` e a cotação é recusada até o ajuste.
+
+## Cotação e pedidos
+
+- `POST /quotes` calcula subtotal, desconto do cupom, taxa de rede (uma por rede envolvida) e total a partir dos preços e estoques do momento. O campo `version` é uma impressão digital desses valores.
+- `POST /orders` recebe a `quoteVersion` que o usuário confirmou. O mock recalcula a cotação; se a versão for outra (preço, estoque, cupom ou taxa mudaram), responde 409 `QUOTE_STALE` com a cotação atual, e a compra só segue com nova confirmação.
+- **Idempotência:** a chave vem no header `Idempotency-Key`. Mesma chave e mesmo corpo devolvem o pedido já criado (200 em vez de 201); mesma chave com corpo diferente responde 409.
+- **Estados:** o pedido nasce `pending` e a simulação o resolve 3 segundos depois como `confirmed` ou `declined`. Os dois últimos são terminais. A resolução é avaliada antes de cada requisição pelo horário gravado no pedido, então sobrevive a refresh e nunca acontece duas vezes.
+- **Confirmação:** baixa o estoque e remove do carrinho só os itens e quantidades comprados. Na recusa o carrinho fica intacto.
+- **Recibo:** é uma cópia dos itens, valores, cupom e carteira no momento da compra. Mudanças posteriores no catálogo não o alteram.
+- A carteira escolhida precisa estar cadastrada e conectada. O hash da transação e o link do explorador são simulados.
 
 ## Deploy
 

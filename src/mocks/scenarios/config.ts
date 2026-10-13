@@ -23,6 +23,15 @@ export interface ScenarioConfig {
   /** Toda requisição autenticada responde 401 SESSION_EXPIRED. */
   sessionExpired: boolean
   failure: Failure | null
+  /**
+   * Interferência na criação do pedido, aplicada uma única vez:
+   * `price-changed` altera o preço do primeiro item antes da validação;
+   * `sold-out` esgota a edição do primeiro item antes da validação;
+   * `timeout-after-create` cria o pedido e derruba a conexão antes de responder.
+   */
+  checkout: 'price-changed' | 'sold-out' | 'timeout-after-create' | null
+  payment: 'confirmed' | 'declined'
+  walletConnection: 'accepted' | 'rejected'
 }
 
 const base: ScenarioConfig = {
@@ -31,6 +40,9 @@ const base: ScenarioConfig = {
   emptyCatalog: false,
   sessionExpired: false,
   failure: null,
+  checkout: null,
+  payment: 'confirmed',
+  walletConnection: 'accepted',
 }
 
 export const scenarios: Record<ScenarioName, ScenarioConfig> = {
@@ -79,5 +91,30 @@ export const scenarios: Record<ScenarioName, ScenarioConfig> = {
     ...base,
     description: 'Favoritar e desfavoritar respondem 500; as consultas funcionam.',
     failure: { kind: 'http-500', pathPrefix: '/favorites', methods: 'mutations', firstAttempts: null },
+  },
+  'price-changed': {
+    ...base,
+    description: 'O preço do primeiro item do carrinho sobe 10% no momento de criar o pedido.',
+    checkout: 'price-changed',
+  },
+  'sold-out': {
+    ...base,
+    description: 'A edição do primeiro item do carrinho esgota no momento de criar o pedido.',
+    checkout: 'sold-out',
+  },
+  'order-timeout': {
+    ...base,
+    description: 'O pedido é criado, mas a conexão cai antes da resposta. Reenviar com a mesma chave o recupera.',
+    checkout: 'timeout-after-create',
+  },
+  'payment-declined': {
+    ...base,
+    description: 'O pagamento é recusado e o pedido termina como recusado.',
+    payment: 'declined',
+  },
+  'wallet-rejected': {
+    ...base,
+    description: 'A carteira recusa o pedido de conexão.',
+    walletConnection: 'rejected',
   },
 }

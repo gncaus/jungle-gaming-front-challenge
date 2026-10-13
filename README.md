@@ -54,6 +54,65 @@ PW_BASE_URL=https://jungle-gaming-front-challenge.vercel.app npm run test:e2e
 
 Nenhuma variável é obrigatória. Há um modelo em [.env.example](.env.example).
 
+## Credenciais fictícias
+
+| Usuário | E-mail | Senha | Estado inicial |
+| --- | --- | --- | --- |
+| Ana Ribeiro | `ana@kurio.test` | `Kurio@123` | 2 favoritos e a carteira principal cadastrada |
+| Bruno Tavares | `bruno@kurio.test` | `Kurio@456` | sem favoritos e sem carteiras |
+
+Cupons: `KURIO10` (10%), `GENESIS25` (25%, para compras a partir de 5 ETH) e `VERAO2025` (expirado).
+
+## Cenários da API simulada
+
+Escolha um cenário acrescentando `?scenario=<nome>` a qualquer URL, por exemplo `http://localhost:5173/?scenario=slow`. A escolha fica gravada no navegador e continua valendo após refresh. Para voltar ao normal, use `?scenario=default`.
+
+| Cenário | Efeito |
+| --- | --- |
+| `default` | Tudo funciona, com latência baixa |
+| `empty-catalog` | O catálogo não tem nenhum NFT |
+| `slow` | Toda resposta demora 2 segundos |
+| `variable-latency` | Respostas entre 100 ms e 1,5 s, em sequência determinística |
+| `out-of-order` | Consultas ao catálogo chegam fora de ordem |
+| `offline` | Toda requisição falha por erro de conexão |
+| `server-error` | Toda requisição responde 500 |
+| `flaky` | As duas primeiras tentativas de cada rota respondem 503; a terceira funciona |
+| `session-expired` | Toda requisição autenticada responde como sessão expirada |
+| `favorites-failure` | Favoritar e desfavoritar falham; as consultas funcionam |
+| `price-changed` | O preço do primeiro item do carrinho sobe 10% ao confirmar a compra |
+| `sold-out` | A edição do primeiro item esgota ao confirmar a compra |
+| `order-timeout` | O pedido é criado, mas a conexão cai antes da resposta |
+| `payment-declined` | O pagamento é recusado |
+| `wallet-rejected` | A carteira recusa a conexão |
+
+Conflito de cadastro e cupom inválido ou expirado não precisam de cenário: basta usar um e-mail já cadastrado ou os cupons acima.
+
+### Reset
+
+No console do navegador:
+
+```js
+window.__mockControl.reset()
+```
+
+Isso restaura o banco simulado e o cenário padrão. Recarregue a página em seguida.
+
+O mesmo objeto permite trocar de cenário e provocar mudanças sem passar pela interface:
+
+```js
+window.__mockControl.setScenario('payment-declined')
+window.__mockControl.expireSessions()
+window.__mockControl.updateEdition({ nftId: 'emerald-ape-042', editionId: 'limited-50', price: '1.5' })
+```
+
+## Imagens
+
+Os originais exportados do Figma ficam em `src/assets/nfts/`. As variantes WebP servidas pela aplicação estão versionadas em `public/images/nfts/` e são geradas por:
+
+```bash
+node scripts/optimize-images.mjs
+```
+
 ## Documentação
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): decisões técnicas, contratos e limitações.

@@ -47,3 +47,4 @@ export type Quote = z.infer<typeof quoteSchema>
 export const quoteStaleSchema = z.object({
   quote: quoteSchema,
 })
+export type QuoteStale = z.infer<typeof quoteStaleSchema>
