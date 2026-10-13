@@ -60,6 +60,7 @@ src/mocks/
   domain/     regras de negócio simuladas: catálogo, carrinho, cotação, pedidos, sessão, senha
   handlers/   uma rota por operação; `route.ts` aplica cenário, latência e contrato de erro
   scenarios/  cenários selecionáveis e o estado do cenário ativo
+  socket/     servidor Socket.IO simulado, que emite os eventos em tempo real
   control.ts  `window.__mockControl`, para testes e demonstração
 ```
 
@@ -138,10 +139,62 @@ Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmou
 - `POST /quotes` calcula subtotal, desconto do cupom, taxa de rede (uma por rede envolvida) e total a partir dos preços e estoques do momento. O campo `version` é uma impressão digital desses valores.
 - `POST /orders` recebe a `quoteVersion` que o usuário confirmou. O mock recalcula a cotação; se a versão for outra (preço, estoque, cupom ou taxa mudaram), responde 409 `QUOTE_STALE` com a cotação atual, e a compra só segue com nova confirmação.
 - **Idempotência:** a chave vem no header `Idempotency-Key`. Mesma chave e mesmo corpo devolvem o pedido já criado (200 em vez de 201); mesma chave com corpo diferente responde 409.
-- **Estados:** o pedido nasce `pending` e a simulação o resolve 3 segundos depois como `confirmed` ou `declined`. Os dois últimos são terminais. A resolução é avaliada antes de cada requisição pelo horário gravado no pedido, então sobrevive a refresh e nunca acontece duas vezes.
+- **Estados:** o pedido nasce `pending` e a simulação o resolve 3 segundos depois como `confirmed` ou `declined`. Os dois últimos são terminais. A resolução depende só do horário gravado no pedido, então sobrevive a refresh e nunca acontece duas vezes (detalhes em "Tempo real").
 - **Confirmação:** baixa o estoque e remove do carrinho só os itens e quantidades comprados. Na recusa o carrinho fica intacto.
 - **Recibo:** é uma cópia dos itens, valores, cupom e carteira no momento da compra. Mudanças posteriores no catálogo não o alteram.
 - A carteira escolhida precisa estar cadastrada e conectada. O hash da transação e o link do explorador são simulados.
+
+## Tempo real
+
+### Eventos
+
+Os dois eventos usam o mesmo envelope (`src/features/realtime/schemas.ts`):
+
+```json
+{
+  "id": "nft:emerald-ape-042:v2",
+  "type": "nft.updated",
+  "resource": "nft",
+  "resourceId": "emerald-ape-042",
+  "version": 2,
+  "occurredAt": "2026-10-13T15:00:00.000Z",
+  "payload": {}
+}
+```
+
+| Evento | Quando | Destino | `payload` |
+| --- | --- | --- | --- |
+| `nft.updated` | Preço ou disponibilidade de um NFT mudou | Todas as conexões | Preço, preço anterior, `soldOut` e as edições com preço e estoque |
+| `order.updated` | O pedido foi confirmado ou recusado | Só as conexões do dono do pedido | O pedido completo, com o recibo |
+
+- `id` é estável: é derivado do recurso e da versão, então a reentrega do mesmo evento tem o mesmo `id`.
+- `version` é a versão do recurso depois da mudança, a mesma que o REST devolve.
+
+### Transporte
+
+- O cliente é o `socket.io-client`, criado em `src/app/socket.ts`, na mesma origem da aplicação e com o caminho `/realtime/`.
+- O servidor é simulado em `src/mocks/socket/server.ts` com o `ws` do MSW e o `@mswjs/socket.io-binding`, que codifica e decodifica os pacotes do protocolo Socket.IO.
+- A autenticação usa o campo `auth` do Socket.IO: o cliente envia o token da sessão no pacote de conexão e o mock associa a conexão ao usuário.
+
+### REST e eventos contam a mesma história
+
+Toda mudança de versão de NFT ou de pedido passa por `src/mocks/db/changes.ts`. A mudança entra em uma fila e só vira evento depois que o banco é gravado, e o evento é montado a partir do estado gravado. Não há outro caminho para emitir evento.
+
+Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edição, derrubar conexões ou reenviar um evento acontece no servidor de socket do mock, e o que chega à interface chega pelo `socket.io-client`.
+
+### Limitações da simulação
+
+- **Só WebSocket.** O MSW intercepta WebSocket, mas não o long-polling com que o Socket.IO começa por padrão. Por isso o cliente usa `transports: ['websocket']`.
+- **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
+- **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
+- **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
+- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Depois de reconectar, o estado atual só é recuperado pela API REST.
+- **Uma aba por vez.** A interceptação acontece dentro da página, não no service worker. Um evento gerado em uma aba não chega às outras. O banco é compartilhado entre abas (`localStorage`), então a outra aba vê o estado novo na próxima consulta REST.
+- **Identificação na conexão.** O usuário é resolvido quando a conexão abre. Se a sessão expirar depois, a conexão continua recebendo eventos até ser encerrada; cabe ao cliente desconectar no logout e na expiração.
+
+### Resolução de pedidos
+
+O pedido pendente é resolvido por um timer do mock no prazo gravado no pedido, e também antes de cada requisição REST. Os dois caminhos usam a mesma função, protegida por um lock do navegador (`navigator.locks`), para que duas abas não resolvam o mesmo pedido. Ao carregar a página, o mock reagenda os pedidos que ficaram pendentes.
 
 ## Deploy
 

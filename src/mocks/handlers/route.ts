@@ -70,7 +70,7 @@ export function route<Body extends JsonBodyType>(
     }
 
     try {
-      settleDueOrders()
+      await settleDueOrders()
       const result = await resolver(context)
       if (result === null) {
         return new HttpResponse(null, { status: 204 })

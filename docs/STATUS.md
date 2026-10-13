@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 2.
+Atualizado em 13/10/2026, ao fim da fatia 3.
 
 ## Feito
 
@@ -24,13 +24,24 @@ Atualizado em 13/10/2026, ao fim da fatia 2.
 - Imagens: 36 variantes WebP geradas a partir dos 4 originais (`scripts/optimize-images.mjs`).
 - 44 testes de contrato passando pelo service worker do MSW (`tests/e2e/api/`), mais os 6 de fumaça.
 
+**Fatia 3 — spike de Socket.IO**
+
+- Servidor Socket.IO simulado com o `ws` do MSW e o `@mswjs/socket.io-binding` (`src/mocks/socket/`).
+- Eventos `nft.updated` e `order.updated` no envelope combinado, com schema zod em `src/features/realtime/schemas.ts`.
+- Ponto único de mudança de versão (`src/mocks/db/changes.ts`): o que muda no banco sai em REST e em evento.
+- `order.updated` só para o dono do pedido; `nft.updated` para todos.
+- Timer de resolução de pedido, com lock entre abas.
+- Cliente `socket.io-client` em `src/app/socket.ts`; a home provisória mostra a conexão e o último evento.
+- `__mockControl` derruba conexões, tira o socket do ar e reenvia eventos.
+- 8 testes novos de tempo real; 60 no total.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 3: spike de Socket.IO com `@mswjs/socket.io-binding` — servidor de socket no mock, eventos `nft.updated` e `order.updated` no envelope combinado, e confirmar se o binding exige `transports: ['websocket']`.
+Fatia 4: layout base (cabeçalho, rodapé, navegação mobile) e catálogo com busca, filtros, ordenação e paginação na URL. A feature provisória `system` sai nesta fatia.
 
 ## Decisões
 
@@ -42,12 +53,15 @@ Fatia 3: spike de Socket.IO com `@mswjs/socket.io-binding` — servidor de socke
 - O estoque só é baixado na confirmação do pedido, não na criação. Se a edição esgotar nesse intervalo, o pedido é recusado.
 - O formulário de pagamento do layout tem os mesmos campos da tela de carteiras. O pedido referencia a carteira cadastrada (`walletSlot`), e o checkout salva a carteira antes de criar o pedido.
 - Login e cadastro são um diálogo sobre a tela inicial no layout, não páginas. A proteção de rotas da fatia 5 vai abrir o diálogo com o endereço de retorno.
+- O socket usa o caminho `/realtime/` e só o transporte WebSocket; os motivos estão em "Tempo real" no `ARCHITECTURE.md`.
+- Eventos não cruzam abas do navegador: fica como limitação documentada.
 
 ## Pendências
 
 - **Lighthouse mobile:** 93 de Performance com a página ainda vazia (LCP de 2,9 s). O custo vem do JavaScript inicial e do MSW carregado antes do primeiro render. Precisa de atenção antes de a home ganhar imagens.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
 - **Feature `system`** (`/api/health` e o aviso "API simulada: conectada" na home): é provisória e sai quando o catálogo entrar na fatia 4. Os utilitários de teste esperam esse aviso para saber que o mock assumiu (`waitForApp`), então precisam mudar junto.
-- **Eventos em tempo real:** as mudanças de NFT e de pedido já incrementam `version`, mas ainda não emitem evento. Até a fatia 3, o estado do pedido só é observável por consulta REST.
+- **Tempo real no cliente (fatia 8):** o transporte está provado, mas o cliente ainda não descarta duplicatas nem eventos antigos, não reconcilia por REST ao reconectar e não atualiza o cache. A conexão autenticada depende da sessão, que entra na fatia 5.
+- **Tamanho do JavaScript inicial:** zod, decimal.js e socket.io-client já entram no carregamento da home. Reavaliar com o Lighthouse quando o catálogo existir.
 - **Detalhe do NFT** ainda não está na lista de páginas do Lighthouse (`lighthouse/config.mjs`).
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

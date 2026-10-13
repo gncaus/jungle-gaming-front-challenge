@@ -7,7 +7,12 @@ import {
 import { readDb, updateDb } from '@/mocks/db/store'
 import type { OrderRecord } from '@/mocks/db/types'
 import { fingerprint } from '@/mocks/domain/hash'
-import { applyCheckoutInterference, createOrder, toOrder } from '@/mocks/domain/orders'
+import {
+  applyCheckoutInterference,
+  createOrder,
+  scheduleSettlement,
+  toOrder,
+} from '@/mocks/domain/orders'
 import { requireUser } from '@/mocks/domain/session'
 import { MockApiError, MockNetworkError } from '@/mocks/handlers/http-error'
 import { Reply, route } from '@/mocks/handlers/route'
@@ -51,6 +56,7 @@ export const orderHandlers = [
       state.idempotency.push({ userId: user.id, key, fingerprint: print, orderId: created.id })
       return created
     })
+    scheduleSettlement(order)
 
     if (getScenario().checkout === 'timeout-after-create' && fireOnce('timeout-after-create')) {
       throw new MockNetworkError()

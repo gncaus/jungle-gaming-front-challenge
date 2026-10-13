@@ -2,7 +2,8 @@ import Decimal from 'decimal.js'
 import type { NetworkId } from '@/features/catalog/schemas'
 import type { QuoteStale } from '@/features/checkout/schemas'
 import type { CreateOrderData, Order } from '@/features/orders/schemas'
-import { nextId, readDb, updateDb } from '@/mocks/db/store'
+import { markNftChanged, markOrderChanged } from '@/mocks/db/changes'
+import { nextId, readDb, reloadDb, updateDb } from '@/mocks/db/store'
 import type { DbState, OrderRecord, UserRecord } from '@/mocks/db/types'
 import { resolveItem, userCartKey } from '@/mocks/domain/cart'
 import { findEdition, findNft } from '@/mocks/domain/catalog'
@@ -47,7 +48,7 @@ export function applyCheckoutInterference(state: DbState, userId: string): void 
   } else {
     edition.available = 0
   }
-  nft.version += 1
+  markNftChanged(nft)
 }
 
 /**
@@ -131,7 +132,7 @@ function confirm(state: DbState, order: OrderRecord): void {
   const cart = state.carts[userCartKey(order.userId)]
   for (const { item, nft, edition } of purchases) {
     edition.available -= item.quantity
-    nft.version += 1
+    markNftChanged(nft)
 
     const cartItem = cart?.items.find(
       (candidate) => candidate.nftId === item.nftId && candidate.editionId === item.editionId,
@@ -148,24 +149,42 @@ function confirm(state: DbState, order: OrderRecord): void {
   order.transaction = { hash, explorerUrl: `${explorers[order.receipt.wallet.network]}${hash}` }
 }
 
+const isDue = (order: OrderRecord) =>
+  order.status === 'pending' && Date.parse(order.settleAt) <= Date.now()
+
 /**
- * Resolve os pedidos pendentes cujo prazo já passou. Roda antes de cada requisição,
- * então o resultado não depende de um timer que se perderia em um refresh.
- * Pedidos confirmados e recusados são terminais e nunca voltam a ser avaliados.
+ * Resolve os pedidos pendentes cujo prazo já passou. Roda antes de cada requisição e
+ * também por timer, e depende só do horário gravado no pedido, então sobrevive a refresh.
+ * O lock impede que duas abas resolvam o mesmo pedido: a segunda relê o banco e o
+ * encontra em estado terminal, que nunca volta a ser avaliado.
  */
-export function settleDueOrders(): void {
-  const isDue = (order: OrderRecord) => order.status === 'pending' && Date.parse(order.settleAt) <= Date.now()
+export async function settleDueOrders(): Promise<void> {
   if (!readDb().orders.some(isDue)) return
 
-  updateDb((state) => {
-    for (const order of state.orders.filter(isDue)) {
-      if (order.outcome === 'declined') {
-        decline(order, 'Pagamento recusado pela carteira.')
-      } else {
-        confirm(state, order)
+  await navigator.locks.request('kurio.mock.settle-orders', () => {
+    reloadDb()
+    updateDb((state) => {
+      for (const order of state.orders.filter(isDue)) {
+        if (order.outcome === 'declined') {
+          decline(order, 'Pagamento recusado pela carteira.')
+        } else {
+          confirm(state, order)
+        }
+        markOrderChanged(order)
       }
-      order.version += 1
-      order.updatedAt = new Date().toISOString()
-    }
+    })
   })
+}
+
+/** Agenda a resolução para o prazo do pedido, para o evento sair mesmo sem novas requisições. */
+export function scheduleSettlement(order: Pick<OrderRecord, 'settleAt'>): void {
+  const delay = Math.max(0, Date.parse(order.settleAt) - Date.now())
+  setTimeout(() => void settleDueOrders(), delay)
+}
+
+/** Reagenda os pedidos que ficaram pendentes antes de um refresh. */
+export function schedulePendingSettlements(): void {
+  for (const order of readDb().orders) {
+    if (order.status === 'pending') scheduleSettlement(order)
+  }
 }

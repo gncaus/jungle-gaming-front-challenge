@@ -105,6 +105,18 @@ window.__mockControl.expireSessions()
 window.__mockControl.updateEdition({ nftId: 'emerald-ape-042', editionId: 'limited-50', price: '1.5' })
 ```
 
+### Tempo real
+
+`updateEdition` altera o banco simulado e o servidor de socket do mock emite o evento `nft.updated` correspondente. Para reproduzir falhas de conexão e de entrega:
+
+```js
+window.__mockControl.disconnectSockets()          // derruba as conexões; o cliente reconecta
+window.__mockControl.setSocketAvailable(false)    // mantém o socket fora do ar
+window.__mockControl.setSocketAvailable(true)     // volta a aceitar conexões
+window.__mockControl.getEmittedEvents()           // eventos já emitidos nesta página
+window.__mockControl.replayEvent('nft:emerald-ape-042:v2') // reenvia um evento (duplicata ou antigo)
+```
+
 ## Imagens
 
 Os originais exportados do Figma ficam em `src/assets/nfts/`. As variantes WebP servidas pela aplicação estão versionadas em `public/images/nfts/` e são geradas por:

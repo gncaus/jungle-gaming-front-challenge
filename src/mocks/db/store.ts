@@ -1,3 +1,4 @@
+import { publishPendingChanges } from '@/mocks/db/changes'
 import { buildSeed, schemaVersion } from '@/mocks/db/seed'
 import type { DbState } from '@/mocks/db/types'
 
@@ -39,7 +40,13 @@ export function updateDb<T>(change: (state: DbState) => T): T {
   } finally {
     // Grava mesmo se a alteração falhar no meio: memória e storage nunca divergem.
     localStorage.setItem(storageKey, JSON.stringify(state))
+    publishPendingChanges()
   }
+}
+
+/** Descarta a cópia em memória: a próxima leitura vem do storage, com o que outra aba gravou. */
+export function reloadDb(): void {
+  cache = null
 }
 
 export function resetDb(): void {
