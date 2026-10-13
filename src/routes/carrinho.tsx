@@ -2,9 +2,10 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
 import { z } from 'zod'
 import { CartItemRow, CartItemRowSkeleton, cartRowGrid } from '@/features/cart/components/cart-item-row'
-import { CartSummary, TotalsSkeleton } from '@/features/cart/components/cart-summary'
+import { CartSummary } from '@/features/cart/components/cart-summary'
 import { useCart } from '@/features/cart/hooks/use-cart'
 import { useCartChangeNotices } from '@/features/cart/hooks/use-cart-changes'
+import { QuoteTotalsSkeleton } from '@/features/checkout/components/quote-totals'
 import { NftShelf } from '@/features/catalog/components/nft-shelf'
 import { Button } from '@/shared/ui/button'
 
@@ -69,7 +70,7 @@ function CartPage() {
             ))}
           </div>
           <div className="md:pt-[150px]">
-            <TotalsSkeleton />
+            <QuoteTotalsSkeleton />
           </div>
         </div>
       )}
@@ -124,9 +125,16 @@ function CartPage() {
             couponCode={couponCode}
             onCouponChange={changeCoupon}
             actions={
-              <Link to="/" hash="catalogo" className="text-text-accent hover:text-primary-light text-base transition-colors">
-                Continuar explorando
-              </Link>
+              <>
+                <Button asChild size="lg" className="h-[60px] w-full rounded-full md:h-10 md:rounded-sm">
+                  <Link to="/pagamento" search={{ cupom: couponCode ?? undefined }}>
+                    Conectar e finalizar
+                  </Link>
+                </Button>
+                <Link to="/" hash="catalogo" className="text-text-accent hover:text-primary-light text-base transition-colors">
+                  Continuar explorando
+                </Link>
+              </>
             }
           />
         </div>

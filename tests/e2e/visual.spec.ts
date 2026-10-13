@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { openApp } from './support/api'
+import { openApp, users } from './support/api'
 import { expectTotals, figmaCart, seedCart } from './support/cart'
 import { expectResults } from './support/catalog'
+import { signIn } from './support/session'
 import { settlePage } from './support/visual'
 
 /**
@@ -35,4 +36,16 @@ test('carrinho', async ({ page }) => {
   await settlePage(page)
 
   await expect(page).toHaveScreenshot('carrinho.png', { fullPage: true })
+})
+
+test('pagamento', async ({ page, isMobile }) => {
+  await openApp(page, '/carrinho')
+  await seedCart(page, figmaCart)
+  await page.reload()
+  await signIn(page, isMobile, users.ana)
+  await page.goto('/pagamento')
+  await expectTotals(page, { subtotal: '26.83', total: '26.846' })
+  await settlePage(page)
+
+  await expect(page).toHaveScreenshot('pagamento.png', { fullPage: true })
 })

@@ -221,6 +221,21 @@ Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmou
 - **Recibo:** é uma cópia dos itens, valores, cupom e carteira no momento da compra. Mudanças posteriores no catálogo não o alteram.
 - A carteira escolhida precisa estar cadastrada e conectada. O hash da transação e o link do explorador são simulados.
 
+### No cliente
+
+O pagamento (`/pagamento`) e o pedido (`/pedido/<id>`) são rotas privadas.
+
+- **Três passos visíveis:** escolher e, se preciso, salvar a carteira; conectá-la; confirmar a compra. O botão de confirmar fica desabilitado enquanto algo impede, e o motivo aparece escrito junto dele.
+- **Carteira:** o usuário escolhe entre a principal e a secundária. O formulário é o do contrato de carteiras, o mesmo da tela de Carteiras. A conexão é simulada: conectar pode ser recusado pela carteira, e desconectar bloqueia a compra de novo.
+- **Revisão:** itens e valores vêm da cotação. A tela guarda a versão da cotação que o usuário viu. Se chegar outra (preço, estoque ou taxa mudaram, por evento em tempo real ou por nova consulta), aparece o total antigo e o novo, e a compra só pode ser confirmada depois de o usuário declarar que revisou.
+- **Envio:** o pedido leva a versão revisada. Se a API responder `QUOTE_STALE` ou `INSUFFICIENT_STOCK`, a tela busca carrinho e cotação atuais, o que leva à mesma revisão.
+- **Idempotência** (`src/features/orders/attempt.ts`): a chave é gerada uma vez por tentativa e guardada no navegador, sob o id do usuário. Enquanto o conteúdo do pedido for o mesmo, a chave é a mesma: clique repetido, nova tentativa depois de um timeout e refresh no meio recuperam o pedido já criado. Mudou o conteúdo, é outra tentativa. A chave é descartada quando o pedido chega a um estado final e quando a sessão muda.
+- **Falha transitória no envio:** a tela não sabe se o pedido foi criado e diz isso; tentar de novo usa a mesma chave. Mutations não são repetidas automaticamente.
+- **Pedido pendente:** a tela do pedido consulta a API a cada segundo enquanto o estado é `pending`. Por estar na URL, sobrevive a refresh.
+- **Confirmação:** o recibo só é renderizado para pedido com estado `confirmed` vindo da API, e mostra o snapshot guardado no pedido. Ao chegar a um estado final, o carrinho é consultado de novo.
+- **Recusa:** mostra o motivo; o carrinho fica intacto e dá para tentar de novo, o que cria outro pedido.
+- **Sessão expirada no meio:** o login reabre e devolve o usuário ao pagamento. Carrinho e carteira estão no servidor e o cupom está na URL, então nada se perde.
+
 ## Tempo real
 
 ### Eventos
@@ -316,7 +331,15 @@ O layout é escuro e não há tema claro.
   - Cada linha mostra também a edição, que o frame desktop não mostra, porque o mesmo NFT pode estar no carrinho em edições diferentes.
   - O desconto aparece como "(-) 0.00 ETH", no mesmo formato dos outros valores; o frame mostra "(-) 00.00".
   - Com um cupom aplicado, a linha de desconto leva a descrição do cupom e aparece a opção de removê-lo.
-  - O botão "Conectar e finalizar" entra com o pagamento.
+  - "Conectar e finalizar" leva ao pagamento; a conexão da carteira acontece lá.
+- **Pagamento:**
+  - O formulário do frame mistura dados de perfil e de carteira. A aplicação usa os campos do contrato de carteira (os mesmos da tela de Carteiras): o que o frame chama de "Nome de usuário" aqui é "Apelido da carteira", e o sufixo do ENS é fixo em `.eth`.
+  - "Usar outra carteira?" virou a escolha explícita entre carteira principal e secundária, como no frame mobile.
+  - As opções de "Carteira e rede" do frame (MetaMask, WalletConnect, Coinbase) repetiam o campo "Tipo de carteira" do formulário. Ficou um campo só, no formulário; o bloco "Carteira e rede" mostra a carteira escolhida, o estado da conexão e o botão de conectar ou desconectar.
+  - No mobile, os dados de uma carteira já cadastrada ficam recolhidos atrás de "Editar".
+  - "Tem um código promocional?" leva ao carrinho, onde o cupom é aplicado.
+- **Confirmação do pedido:** é uma página (`/pedido/<id>`), não um diálogo sobre a tela anterior, para sobreviver a refresh e poder ser retomada. O recibo mostra também o subtotal e, se houver, o desconto. O link para o explorador vem com o aviso de que a transação é simulada.
+- **Pedido pendente e recusado:** não estão no layout; seguem o padrão visual do recibo.
 - **Avisos:** resultados de ações (como favoritar) e falhas aparecem em um aviso no rodapé da tela, que é também a região `aria-live` da aplicação.
 
 ## Testes
@@ -328,7 +351,7 @@ O layout é escuro e não há tema claro.
 - **Testes de interface** (`tests/e2e/*.spec.ts`) rodam nos dois projetos e verificam o que aparece na tela.
 - **Testes de contrato** (`tests/e2e/api/`) rodam só no projeto desktop. Chamam a API com `fetch` de dentro da página, para passar pelo service worker do MSW, e abrem uma rota sem tela para que as consultas da própria aplicação não se misturem às do teste.
 - **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock.
-- **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial, detalhe e carrinho, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
+- **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial, detalhe, carrinho e pagamento, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
 
 ## Lighthouse
 

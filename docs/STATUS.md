@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 6.
+Atualizado em 13/10/2026, ao fim da fatia 7.
 
 ## Feito
 
@@ -75,13 +75,25 @@ Atualizado em 13/10/2026, ao fim da fatia 6.
 - Lighthouse (mediana de 3): início e detalhe em 90 no mobile e 100 no desktop; os demais em 100.
 - 176 testes no total, 1 pulado no desktop por ser só do mobile.
 
+**Fatia 7 — pagamento, pedido e confirmação**
+
+- Rotas privadas `/pagamento` e `/pedido/<id>`; "Conectar e finalizar" no carrinho.
+- Escolha entre carteira principal e secundária, formulário de carteira validado pelo contrato, conexão simulada com recusa e desconexão.
+- Revisão pela cotação; mudança de valores (por socket ou recusa do servidor) exige nova confirmação.
+- Pedido idempotente: clique repetido e nova tentativa após timeout recuperam o mesmo pedido.
+- Pedido pendente com consulta periódica e retomada após refresh; recibo só com confirmação da API; recusa preserva o carrinho.
+- Sessão expirada no pagamento devolve o usuário à tela, com carrinho e cupom.
+- Regressão visual do pagamento.
+- Lighthouse (mediana de 3): início mobile 90, detalhe mobile 91, ambos desktop 100.
+- 204 testes no total, 1 pulado no desktop por ser só do mobile.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 7: pagamento (`/pagamento`, rota privada), com carteira e rede, revisão, criação idempotente do pedido, bloqueio com cotação desatualizada, pedido pendente recuperável e a confirmação com o recibo. Inclui o botão "Conectar e finalizar" do carrinho.
+Fatia 8: tempo real completo — descartar eventos duplicados (por `id`) e antigos (por `version`), tratar `order.updated` na tela do pedido no lugar da consulta periódica, e o teste de desconexão com pedido pendente.
 
 ## Decisões
 
@@ -108,12 +120,15 @@ Fatia 7: pagamento (`/pagamento`, rota privada), com carteira e rede, revisão, 
 - O cupom aplicado vive na URL do carrinho (`?cupom=`).
 - Sem tela de favoritos; a barra do mobile tem Início, Explorar, Carrinho e Perfil.
 
+- O pagamento tem três passos explícitos (salvar carteira, conectar, confirmar), com o motivo do bloqueio escrito junto do botão.
+- A chave de idempotência é por conteúdo do pedido e fica no navegador, sob o id do usuário.
+- A confirmação é uma página com URL própria, não um diálogo.
+
 ## Pendências
 
 - **Lighthouse mobile:** 90 nas duas páginas, sem folga sobre a meta (era 92 antes do carrinho, que acrescentou código e uma consulta em toda página). Precisa de uma rodada de otimização antes da entrega: zod responde por cerca de 40 KB comprimidos do bundle comum, e o LCP (3,3 s) depende de a API simulada responder.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
-- **Carrinho:** falta o botão "Conectar e finalizar" (fatia 7).
-- **Perfil:** só leitura; edição, avatar, senha e carteiras são a fatia 9.
-- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe ou o carrinho. Falta a baseline do pagamento.
-- **Tempo real no cliente (fatia 8):** hoje `nft.updated` invalida catálogo, carrinho e cotação, a conexão é autenticada e cada conexão reconcilia pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated`.
+- **Perfil:** só leitura; edição, avatar e senha são a fatia 9, assim como a tela de Carteiras (o formulário já existe, usado no pagamento).
+- **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe, o carrinho ou o pagamento.
+- **Tempo real no cliente (fatia 8):** hoje `nft.updated` invalida catálogo, carrinho e cotação, a conexão é autenticada e cada conexão reconcilia pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated` (a tela do pedido ainda usa consulta periódica).
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

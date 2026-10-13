@@ -1,12 +1,7 @@
 import { Tabs } from 'radix-ui'
+import { networkNames } from '@/features/catalog/labels'
 import { NftRating } from '@/features/catalog/components/detail/nft-rating'
 import type { NftDetail } from '@/features/catalog/schemas'
-
-const networkNames: Record<NftDetail['network'], string> = {
-  ethereum: 'Ethereum',
-  polygon: 'Polygon',
-  solana: 'Solana',
-}
 
 const triggerClass =
   'data-[state=active]:border-primary data-[state=active]:text-text-accent hover:text-primary-light -mb-px border-b-2 border-transparent pb-2 text-left text-[15px] transition-colors data-[state=active]:font-bold md:text-[17px]'

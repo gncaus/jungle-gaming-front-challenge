@@ -1,11 +1,9 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import type { Cart } from '@/features/cart/schemas'
+import { QuoteTotals, QuoteTotalsSkeleton } from '@/features/checkout/components/quote-totals'
 import { useApplyCoupon, useQuote } from '@/features/checkout/hooks/use-quote'
-import type { Quote } from '@/features/checkout/schemas'
 import { HttpError } from '@/shared/lib/http'
-import { formatEth } from '@/shared/lib/money'
 import { Button } from '@/shared/ui/button'
-import { Skeleton } from '@/shared/ui/skeleton'
 
 interface CartSummaryProps {
   cart: Cart
@@ -14,49 +12,6 @@ interface CartSummaryProps {
   onCouponChange: (couponCode: string | null) => void
   /** Ações abaixo do total (continuar comprando, finalizar). */
   actions?: ReactNode
-}
-
-const rowClass = 'flex items-baseline justify-between gap-4 text-base'
-
-function Totals({ quote }: { quote: Quote }) {
-  return (
-    <dl className="flex flex-col gap-3" data-testid="cart-totals">
-      <div className={rowClass}>
-        <dt>Subtotal</dt>
-        <dd className="text-lg">{formatEth(quote.subtotal)}</dd>
-      </div>
-      <div className={rowClass}>
-        <dt>{quote.coupon ? quote.coupon.description : 'Desconto do lançamento'}</dt>
-        <dd className="shrink-0 whitespace-nowrap">(-) {formatEth(quote.discount)}</dd>
-      </div>
-      <div className={rowClass}>
-        <dt>Taxa de rede</dt>
-        <dd className="text-right text-lg">
-          {formatEth(quote.networkFee)}
-          <span className="text-text-accent block text-xs">Taxa estimada</span>
-        </dd>
-      </div>
-      <div className={`${rowClass} mt-2 font-bold`}>
-        <dt>Total</dt>
-        <dd className="text-text-accent text-lg">{formatEth(quote.total)}</dd>
-      </div>
-    </dl>
-  )
-}
-
-/** Mesmas linhas e alturas do resumo pronto, para nada se deslocar quando a cotação chega. */
-export function TotalsSkeleton() {
-  return (
-    <div className="flex flex-col gap-3" aria-busy="true" data-testid="cart-totals-skeleton">
-      <p role="status" className="sr-only">
-        Calculando valores…
-      </p>
-      <Skeleton className="h-7 w-full" />
-      <Skeleton className="h-6 w-full" />
-      <Skeleton className="h-11 w-full" />
-      <Skeleton className="mt-2 h-7 w-full" />
-    </div>
-  )
 }
 
 /** Resumo do carrinho. Todos os valores vêm da cotação da API. */
@@ -140,8 +95,8 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
       )}
 
       <div className="mt-5">
-        {quote.isPending && <TotalsSkeleton />}
-        {quote.data && <Totals quote={quote.data} />}
+        {quote.isPending && <QuoteTotalsSkeleton />}
+        {quote.data && <QuoteTotals quote={quote.data} />}
 
         {couponRejected && (
           <div role="alert" className="flex flex-col items-start gap-2 text-sm">

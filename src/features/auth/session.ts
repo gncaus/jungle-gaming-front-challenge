@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { AuthResult } from '@/features/auth/schemas'
 import { getToken, renewGuestId, setToken, subscribeToToken } from '@/shared/lib/credentials'
+import { clearPrivateStorage } from '@/shared/lib/private-storage'
 
 /** A sessão é guardada por token: outro token nunca reaproveita o usuário em cache. */
 export function sessionKey(token: string) {
@@ -14,11 +15,12 @@ export function sessionKey(token: string) {
 const publicCacheRoot = 'catalog'
 
 /**
- * Apaga do cache tudo o que é de um usuário ou visitante. O catálogo fica, porque é público
+ * Apaga do cache e do armazenamento do navegador tudo o que é de um usuário ou visitante. O catálogo fica, porque é público
  * e as telas abertas continuam observando essas consultas (apagá-las as deixaria sem
  * receber as atualizações em tempo real).
  */
 function dropPrivateData(queryClient: QueryClient): void {
+  clearPrivateStorage()
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== publicCacheRoot })
   queryClient.getMutationCache().clear()
 }

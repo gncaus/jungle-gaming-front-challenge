@@ -1,6 +1,6 @@
 import type { UseMutationResult } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { useForm, type FieldPath, type FieldValues, type UseFormReturn } from 'react-hook-form'
+import { useForm, type FieldValues, type UseFormReturn } from 'react-hook-form'
 import { useLogin, useRegister } from '@/features/auth/hooks/use-session'
 import {
   loginInputSchema,
@@ -8,27 +8,10 @@ import {
   type LoginInput,
   type RegisterInput,
 } from '@/features/auth/schemas'
-import { HttpError } from '@/shared/lib/http'
+import { applyApiError } from '@/shared/lib/form-errors'
 import { zodResolver } from '@/shared/lib/zod-resolver'
 import { Button } from '@/shared/ui/button'
 import { TextField } from '@/shared/ui/text-field'
-
-/** Leva os erros por campo da API para os campos; o que sobra vira a mensagem geral do formulário. */
-function applyApiError<Values extends FieldValues>(form: UseFormReturn<Values>, error: unknown): void {
-  const fields = error instanceof HttpError ? error.fields : undefined
-  const known = Object.keys(form.getValues())
-  let focused = false
-  for (const [field, message] of Object.entries(fields ?? {})) {
-    if (!known.includes(field)) continue
-    form.setError(field as FieldPath<Values>, { message }, { shouldFocus: !focused })
-    focused = true
-  }
-  if (!focused) {
-    form.setError('root', {
-      message: error instanceof Error ? error.message : 'Algo deu errado. Tente novamente.',
-    })
-  }
-}
 
 function FormError({ message }: { message?: string }) {
   return (
