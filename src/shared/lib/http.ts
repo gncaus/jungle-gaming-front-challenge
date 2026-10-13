@@ -1,6 +1,7 @@
 import axios, { isAxiosError, isCancel } from 'axios'
 import { apiErrorSchema, type ApiError, type ApiErrorCode } from '@/shared/lib/api-error'
 import { backendReady } from '@/shared/lib/backend-ready'
+import { getGuestId, getToken } from '@/shared/lib/credentials'
 
 /** Erro de uma chamada à API, já no formato do contrato. `status` 0 indica falha de conexão. */
 export class HttpError extends Error {
@@ -22,6 +23,11 @@ export class HttpError extends Error {
   get isTransient(): boolean {
     return this.status === 0 || this.status >= 500
   }
+
+  /** A sessão enviada não vale mais (expirou ou foi encerrada). */
+  get isSessionLost(): boolean {
+    return this.code === 'SESSION_EXPIRED' || this.code === 'UNAUTHENTICATED'
+  }
 }
 
 export const http = axios.create({
@@ -31,8 +37,19 @@ export const http = axios.create({
   paramsSerializer: { indexes: null },
 })
 
+type SessionLostHandler = (error: HttpError) => void
+let onSessionLost: SessionLostHandler | null = null
+
+/** A aplicação registra aqui o que fazer quando a API recusa a sessão enviada. */
+export function setSessionLostHandler(handler: SessionLostHandler): void {
+  onSessionLost = handler
+}
+
 http.interceptors.request.use(async (config) => {
   await backendReady()
+  const token = getToken()
+  if (token) config.headers.set('Authorization', `Bearer ${token}`)
+  config.headers.set('X-Guest-Id', getGuestId())
   return config
 })
 
@@ -43,10 +60,18 @@ http.interceptors.response.use(undefined, (error: unknown) => {
   if (!error.response) {
     throw new HttpError(0, 'NETWORK_ERROR', 'Não foi possível conectar. Verifique sua conexão e tente novamente.')
   }
+
   const parsed = apiErrorSchema.safeParse(error.response.data)
-  if (parsed.success) {
-    const { code, message, ...extra } = parsed.data
-    throw new HttpError(error.response.status, code, message, extra)
+  if (!parsed.success) {
+    throw new HttpError(error.response.status, 'INTERNAL_ERROR', 'Algo deu errado. Tente novamente.')
   }
-  throw new HttpError(error.response.status, 'INTERNAL_ERROR', 'Algo deu errado. Tente novamente.')
+  const { code, message, ...extra } = parsed.data
+  const httpError = new HttpError(error.response.status, code, message, extra)
+
+  // Só interessa quando a requisição levou um token: sem token, 401 é apenas "faça login".
+  const sentToken = error.config?.headers.has('Authorization') ?? false
+  if (httpError.isSessionLost && sentToken) {
+    onSessionLost?.(httpError)
+  }
+  throw httpError
 })

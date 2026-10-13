@@ -1,14 +1,45 @@
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Link, Outlet, useRouter } from '@tanstack/react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { MobileNav } from '@/app/layout/mobile-nav'
 import { SiteFooter } from '@/app/layout/site-footer'
 import { SiteHeader } from '@/app/layout/site-header'
+import { useToken } from '@/features/auth/hooks/use-session'
+import { authSearchSchema, safeRedirect } from '@/features/auth/search'
 import { Button } from '@/shared/ui/button'
 
+// O diálogo (e o formulário que vem com ele) só é baixado quando alguém vai entrar.
+const AuthDialog = lazy(() =>
+  import('@/features/auth/components/auth-dialog').then((module) => ({ default: module.AuthDialog })),
+)
+
 export const Route = createRootRoute({
+  validateSearch: authSearchSchema,
   component: RootLayout,
   notFoundComponent: NotFound,
 })
 
 function RootLayout() {
+  const { auth, redirect, expired } = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const router = useRouter()
+  const hasSession = useToken() !== null
+
+  // Quem já tem sessão e chega em um link de login segue direto para o destino.
+  useEffect(() => {
+    if (!auth || !hasSession) return
+    const target = safeRedirect(redirect)
+    if (target) {
+      router.history.replace(target)
+    } else {
+      void navigate({
+        to: '.',
+        search: (previous) => ({ ...previous, auth: undefined, redirect: undefined, expired: undefined }),
+        replace: true,
+        resetScroll: false,
+      })
+    }
+  }, [auth, hasSession, redirect, navigate, router])
+
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -22,6 +53,12 @@ function RootLayout() {
         <Outlet />
       </main>
       <SiteFooter />
+      <MobileNav />
+      {auth && !hasSession && (
+        <Suspense fallback={null}>
+          <AuthDialog mode={auth} redirect={redirect} expired={expired} />
+        </Suspense>
+      )}
     </div>
   )
 }

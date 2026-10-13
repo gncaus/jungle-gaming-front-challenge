@@ -1,6 +1,7 @@
 import { Link, useLocation, useSearch } from '@tanstack/react-router'
 import { Search, X } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { AccountMenu } from '@/app/layout/account-menu'
 import { SearchForm } from '@/features/catalog/components/search-form'
 import { cn } from '@/shared/lib/utils'
 
@@ -83,6 +84,7 @@ export function SiteHeader() {
           >
             {searchOpen ? <X aria-hidden="true" /> : <Search aria-hidden="true" />}
           </button>
+          <AccountMenu />
         </div>
       </div>
     </header>

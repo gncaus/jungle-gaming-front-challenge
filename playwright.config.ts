@@ -11,8 +11,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   expect: {
-    // Tolerância para variação de antialiasing entre execuções; diferenças reais passam disso.
-    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
+    // Tolerância só para ruído de antialiasing. Em uma captura de página inteira, 0,05% já é
+    // menos que um botão pequeno, então qualquer mudança visível reprova.
+    toHaveScreenshot: { maxDiffPixelRatio: 0.0005 },
   },
   use: {
     baseURL: externalBaseUrl ?? localBaseUrl,
