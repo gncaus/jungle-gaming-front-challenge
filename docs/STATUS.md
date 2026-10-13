@@ -100,5 +100,5 @@ Fatia 6: carrinho (adicionar pelo detalhe e pelo card, quantidades, remoção, c
 - **Detalhe e card:** faltam os botões "Comprar" e de carrinho (fatia 6).
 - **Perfil:** só leitura; edição, avatar, senha e carteiras são a fatia 9.
 - **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial ou o detalhe.
-- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` só invalida o catálogo, e a conexão já é autenticada. Faltam descartar duplicatas e eventos antigos, reconciliar por REST ao reconectar e tratar `order.updated`.
+- **Tempo real no cliente (fatia 8):** hoje o evento `nft.updated` invalida o catálogo, a conexão é autenticada e cada conexão reconcilia o catálogo pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated`.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

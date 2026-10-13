@@ -256,7 +256,7 @@ Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edi�
 - **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
 - **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
 - **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
-- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Depois de reconectar, o estado atual só é recuperado pela API REST.
+- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas do catálogo que estão em uso.
 - **Uma aba por vez.** A interceptação acontece dentro da página, não no service worker. Um evento gerado em uma aba não chega às outras. O banco é compartilhado entre abas (`localStorage`), então a outra aba vê o estado novo na próxima consulta REST.
 - **Identificação na conexão.** O usuário é resolvido quando a conexão abre. Se a sessão expirar depois, a conexão continua recebendo eventos até ser encerrada; cabe ao cliente desconectar no logout e na expiração.
 

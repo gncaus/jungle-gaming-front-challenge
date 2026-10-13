@@ -110,7 +110,12 @@ test('sessão que expira em página pública pede login sem tirar o usuário do 
   isMobile,
 }) => {
   await openApp(page, '/?tab=trending')
+  // Os cards consultam os favoritos assim que a sessão abre. Esperar essa resposta garante que
+  // nenhuma chamada autenticada esteja em andamento quando a sessão for vencida; do contrário
+  // o 401 chegaria antes do refresh e o teste dependeria de quem ganhasse a corrida.
+  const favoritesLoaded = page.waitForResponse((response) => response.url().endsWith('/api/favorites'))
   await signIn(page, isMobile, users.ana)
+  await favoritesLoaded
 
   await mockControl(page, 'expireSessions')
   await page.reload()

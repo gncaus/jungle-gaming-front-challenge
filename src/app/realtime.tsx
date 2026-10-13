@@ -30,6 +30,12 @@ export function RealtimeBridge() {
         return
       }
       socket = connected
+      // Eventos emitidos enquanto não havia conexão (antes da primeira ou durante uma queda)
+      // não são reentregues. A cada conexão, o que está na tela é reconciliado pela API REST.
+      // `cancelRefetch: false` evita refazer uma consulta que já está em andamento.
+      socket.on('connect', () => {
+        void queryClient.invalidateQueries({ queryKey: catalogKeys.all }, { cancelRefetch: false })
+      })
       socket.on('nft.updated', (data: unknown) => {
         if (nftUpdatedEventSchema.safeParse(data).success) {
           void queryClient.invalidateQueries({ queryKey: catalogKeys.all })
