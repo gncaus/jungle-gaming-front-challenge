@@ -14,10 +14,11 @@ Atualizado em 13/10/2026, ao fim da fatia 1.
 - Playwright (desktop 1440 e mobile 390) com teste de fumaça: 6 testes passando.
 - Script do Lighthouse funcionando, por enquanto só com a página inicial.
 - `vercel.json` com reescrita de SPA.
+- Deploy na Vercel em https://jungle-gaming-front-challenge.vercel.app, publicado a cada push em `main`. Os 6 testes de fumaça passam contra a URL pública (mock pelo service worker e acesso direto a rota profunda).
 
 ## Em andamento
 
-- Deploy inicial na Vercel: falta importar o repositório no painel e validar a URL pública.
+Nada.
 
 ## Próximo passo
 

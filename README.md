@@ -2,6 +2,8 @@
 
 Solução do desafio frontend descrito em [DESAFIO.md](DESAFIO.md). A aplicação roda inteira contra uma API simulada com MSW; não há backend real.
 
+**Aplicação publicada:** https://jungle-gaming-front-challenge.vercel.app
+
 > Em construção. O estado atual de cada fluxo está em [docs/STATUS.md](docs/STATUS.md).
 
 ## Requisitos
@@ -41,7 +43,7 @@ O relatório HTML dos testes fica em `playwright-report/` (`npx playwright show-
 Para rodar a suíte contra um ambiente publicado, informe a URL:
 
 ```bash
-PW_BASE_URL=https://exemplo.vercel.app npm run test:e2e
+PW_BASE_URL=https://jungle-gaming-front-challenge.vercel.app npm run test:e2e
 ```
 
 ## Variáveis de ambiente

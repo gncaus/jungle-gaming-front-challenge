@@ -23,6 +23,8 @@ export default defineConfig({
     },
     {
       name: 'mobile',
+      // Os testes de contrato da API não dependem de viewport: rodam só no projeto desktop.
+      testIgnore: /[\\/]api[\\/]/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 390, height: 844 },
