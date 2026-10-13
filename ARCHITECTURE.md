@@ -67,7 +67,7 @@ Configuração em `src/app/query-client.ts`; chaves e opções de cada consulta 
 | Mutations | Nunca são repetidas automaticamente, para não duplicar operações. |
 | Respostas obsoletas | Cada combinação de parâmetros tem sua chave e a requisição recebe o `signal` do Query. Ao mudar um filtro, a consulta anterior é cancelada e, mesmo que responda, não é exibida. |
 | Atualização otimista | Favoritos (ver "Favoritos"). |
-| Tempo real | O evento `nft.updated` invalida as consultas do catálogo, do carrinho e da cotação, que são refeitas pela API REST. O socket avisa que algo mudou; o estado exibido vem sempre do REST. |
+| Tempo real | O evento `nft.updated` invalida as consultas do catálogo, do carrinho e da cotação, que são refeitas pela API REST. O evento `order.updated` traz o pedido completo, que vai direto para o cache. Detalhes em "Tempo real". |
 
 Erros da API chegam à interface como `HttpError` (`src/shared/lib/http.ts`), já no formato do contrato de erro. O interceptor do Axios faz essa conversão em um só lugar.
 
@@ -231,8 +231,8 @@ O pagamento (`/pagamento`) e o pedido (`/pedido/<id>`) são rotas privadas.
 - **Envio:** o pedido leva a versão revisada. Se a API responder `QUOTE_STALE` ou `INSUFFICIENT_STOCK`, a tela busca carrinho e cotação atuais, o que leva à mesma revisão.
 - **Idempotência** (`src/features/orders/attempt.ts`): a chave é gerada uma vez por tentativa e guardada no navegador, sob o id do usuário. Enquanto o conteúdo do pedido for o mesmo, a chave é a mesma: clique repetido, nova tentativa depois de um timeout e refresh no meio recuperam o pedido já criado. Mudou o conteúdo, é outra tentativa. A chave é descartada quando o pedido chega a um estado final e quando a sessão muda.
 - **Falha transitória no envio:** a tela não sabe se o pedido foi criado e diz isso; tentar de novo usa a mesma chave. Mutations não são repetidas automaticamente.
-- **Pedido pendente:** a tela do pedido consulta a API a cada segundo enquanto o estado é `pending`. Por estar na URL, sobrevive a refresh.
-- **Confirmação:** o recibo só é renderizado para pedido com estado `confirmed` vindo da API, e mostra o snapshot guardado no pedido. Ao chegar a um estado final, o carrinho é consultado de novo.
+- **Pedido pendente:** a tela do pedido espera o evento `order.updated`. Só se o socket estiver fora do ar ela consulta a API, a cada 2 segundos, até a conexão voltar ou o pedido chegar a um estado final. Por estar na URL, o pedido sobrevive a refresh.
+- **Confirmação:** o recibo só é renderizado para pedido com estado `confirmed` vindo da simulação (pelo evento ou pela API), e mostra o snapshot guardado no pedido. Ao chegar a um estado final, o carrinho é consultado de novo.
 - **Recusa:** mostra o motivo; o carrinho fica intacto e dá para tentar de novo, o que cria outro pedido.
 - **Sessão expirada no meio:** o login reabre e devolve o usuário ao pagamento. Carrinho e carteira estão no servidor e o cupom está na URL, então nada se perde.
 
@@ -274,6 +274,16 @@ Toda mudança de versão de NFT ou de pedido passa por `src/mocks/db/changes.ts`
 
 Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edição, derrubar conexões ou reenviar um evento acontece no servidor de socket do mock, e o que chega à interface chega pelo `socket.io-client`.
 
+### No cliente
+
+`src/app/realtime.tsx` é o único lugar que escuta os eventos.
+
+- **Duplicatas e eventos antigos** (`src/features/realtime/event-guard.ts`): todo evento passa por um guarda antes de ter efeito. Ele descarta o evento cujo `id` já foi visto e o evento cuja `version` é menor ou igual à última aplicada àquele recurso, ou à versão que já está no cache. Um evento descartado não refaz consultas, não muda o cache e não gera aviso.
+- **`nft.updated`:** o evento só avisa que o NFT mudou. Catálogo, carrinho e cotação são refeitos pela API REST, então a tela nunca mostra um valor montado a partir do evento.
+- **`order.updated`:** o pedido do evento vai para o cache e o resultado é anunciado na região `aria-live`. Um pedido já confirmado ou recusado não é alterado por nenhum evento. O carrinho e o catálogo são revalidados, porque a confirmação baixa o estoque e tira do carrinho o que foi comprado.
+- **Reconexão:** a cada conexão (a primeira e todas as seguintes) o cliente revalida pela API REST o catálogo, o carrinho, a cotação e os pedidos em uso. Enquanto o socket está fora do ar, a tela de um pedido pendente consulta a API periodicamente.
+- **Ciclo de vida:** a conexão, os listeners e o guarda pertencem à sessão. Na troca de token tudo é descartado e recriado, e o evento de pedido só é aplicado ao usuário da sessão que abriu a conexão.
+
 ### Limitações da simulação
 
 - **Só WebSocket.** O MSW intercepta WebSocket, mas não o long-polling com que o Socket.IO começa por padrão. Por isso o cliente usa `transports: ['websocket']`.
@@ -281,7 +291,8 @@ Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edi�
 - **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
 - **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
 - **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
-- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas de catálogo, carrinho e cotação que estão em uso.
+- **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas de catálogo, carrinho, cotação e pedidos que estão em uso.
+- **Recusa com erro.** Com o socket fora do ar (`setSocketAvailable(false)`), o mock dispara um erro no WebSocket antes de fechá-lo, como acontece com um servidor inacessível. Um fechamento limpo no meio do handshake deixaria o cliente Socket.IO parado até o tempo limite de conexão (20 s) antes de tentar de novo.
 - **Uma aba por vez.** A interceptação acontece dentro da página, não no service worker. Um evento gerado em uma aba não chega às outras. O banco é compartilhado entre abas (`localStorage`), então a outra aba vê o estado novo na próxima consulta REST.
 - **Identificação na conexão.** O usuário é resolvido quando a conexão abre. Se a sessão expirar depois, a conexão continua recebendo eventos até ser encerrada; cabe ao cliente desconectar no logout e na expiração.
 

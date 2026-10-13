@@ -4,25 +4,30 @@ import { createOrder, fetchOrder } from '@/features/orders/api/orders-api'
 import { idempotencyKeyFor } from '@/features/orders/attempt'
 import type { CreateOrderData } from '@/features/orders/schemas'
 import { privateKey } from '@/shared/lib/query-keys'
+import { useRealtimeConnected } from '@/shared/lib/realtime-status'
 
 export const orderKeys = {
   detail: (userId: string, orderId: string) => privateKey(userId, 'orders', orderId),
 }
 
-/** Intervalo de consulta enquanto o pedido está pendente. */
-const pendingPollMs = 1000
+/** Intervalo da consulta de reserva, usada só quando o socket está fora do ar. */
+const fallbackPollMs = 2000
 
 /**
- * Estado do pedido. Enquanto estiver pendente, a API é consultada de novo a cada segundo;
- * confirmado e recusado são finais, e a consulta periódica para.
+ * Estado do pedido. A mudança de pendente para confirmado ou recusado chega pelo evento
+ * `order.updated`, que atualiza este cache. Se a conexão de tempo real cair com o pedido
+ * pendente, a API passa a ser consultada periodicamente até a conexão voltar ou o pedido
+ * chegar a um estado final.
  */
 export function useOrder(orderId: string) {
   const { user } = useSession()
+  const realtimeConnected = useRealtimeConnected()
   return useQuery({
     queryKey: orderKeys.detail(user?.id ?? '', orderId),
     queryFn: ({ signal }) => fetchOrder(orderId, signal),
     enabled: user !== null,
-    refetchInterval: (query) => (query.state.data?.status === 'pending' ? pendingPollMs : false),
+    refetchInterval: (query) =>
+      query.state.data?.status === 'pending' && !realtimeConnected ? fallbackPollMs : false,
   })
 }
 

@@ -123,6 +123,8 @@ window.__mockControl.getEmittedEvents()           // eventos já emitidos nesta 
 window.__mockControl.replayEvent('nft:emerald-ape-042:v2') // reenvia um evento (duplicata ou antigo)
 ```
 
+Um evento reenviado é descartado pelo cliente: nada é consultado de novo e nenhum aviso se repete. Com o socket fora do ar, a tela de um pedido pendente passa a consultar a API até a conexão voltar.
+
 ## Imagens
 
 Os originais exportados do Figma ficam em `src/assets/nfts/`. As variantes WebP servidas pela aplicação estão versionadas em `public/images/nfts/` e são geradas por:

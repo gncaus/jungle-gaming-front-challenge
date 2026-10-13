@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 7.
+Atualizado em 13/10/2026, ao fim da fatia 8.
 
 ## Feito
 
@@ -81,11 +81,20 @@ Atualizado em 13/10/2026, ao fim da fatia 7.
 - Escolha entre carteira principal e secundária, formulário de carteira validado pelo contrato, conexão simulada com recusa e desconexão.
 - Revisão pela cotação; mudança de valores (por socket ou recusa do servidor) exige nova confirmação.
 - Pedido idempotente: clique repetido e nova tentativa após timeout recuperam o mesmo pedido.
-- Pedido pendente com consulta periódica e retomada após refresh; recibo só com confirmação da API; recusa preserva o carrinho.
+- Pedido pendente com retomada após refresh; recibo só com confirmação da simulação; recusa preserva o carrinho.
 - Sessão expirada no pagamento devolve o usuário à tela, com carrinho e cupom.
 - Regressão visual do pagamento.
 - Lighthouse (mediana de 3): início mobile 90, detalhe mobile 91, ambos desktop 100.
 - 204 testes no total, 1 pulado no desktop por ser só do mobile.
+
+**Fatia 8 — tempo real completo**
+
+- Guarda de eventos: duplicatas (por `id`) e eventos antigos (por `version`) são descartados sem refazer consultas, mudar o cache ou repetir avisos.
+- `order.updated` leva o pedido ao cache e anuncia confirmação ou recusa; pedido em estado final não é alterado por evento.
+- A tela do pedido deixou de consultar a API periodicamente; a consulta só volta enquanto o socket está fora do ar.
+- A cada conexão, os pedidos em uso também são reconciliados pela API REST.
+- O mock recusa conexões com erro quando o socket está fora do ar, o que corrigiu uma reconexão que às vezes levava 20 s (teste intermitente).
+- 214 testes no total, 1 pulado no desktop por ser só do mobile.
 
 ## Em andamento
 
@@ -93,7 +102,7 @@ Nada.
 
 ## Próximo passo
 
-Fatia 8: tempo real completo — descartar eventos duplicados (por `id`) e antigos (por `version`), tratar `order.updated` na tela do pedido no lugar da consulta periódica, e o teste de desconexão com pedido pendente.
+Fatia 9: perfil (edição de dados, avatar e senha) e tela de Carteiras (principal e secundária). O backend simulado e o formulário de carteira já existem.
 
 ## Decisões
 
@@ -124,11 +133,13 @@ Fatia 8: tempo real completo — descartar eventos duplicados (por `id`) e antig
 - A chave de idempotência é por conteúdo do pedido e fica no navegador, sob o id do usuário.
 - A confirmação é uma página com URL própria, não um diálogo.
 
+- `nft.updated` só invalida consultas (o estado vem do REST); `order.updated` grava o pedido do evento no cache, porque é ele que confirma a compra.
+- A consulta periódica do pedido é reserva para socket fora do ar, não o caminho normal.
+
 ## Pendências
 
 - **Lighthouse mobile:** 90 nas duas páginas, sem folga sobre a meta (era 92 antes do carrinho, que acrescentou código e uma consulta em toda página). Precisa de uma rodada de otimização antes da entrega: zod responde por cerca de 40 KB comprimidos do bundle comum, e o LCP (3,3 s) depende de a API simulada responder.
 - **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
 - **Perfil:** só leitura; edição, avatar e senha são a fatia 9, assim como a tela de Carteiras (o formulário já existe, usado no pagamento).
 - **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe, o carrinho ou o pagamento.
-- **Tempo real no cliente (fatia 8):** hoje `nft.updated` invalida catálogo, carrinho e cotação, a conexão é autenticada e cada conexão reconcilia pela API REST. Faltam descartar duplicatas e eventos antigos e tratar `order.updated` (a tela do pedido ainda usa consulta periódica).
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

@@ -57,6 +57,12 @@ export const socketHandlers = [
   link.addEventListener('connection', (connection) => {
     const { client } = connection
     if (!available) {
+      // Um servidor fora do ar faz o WebSocket falhar com erro, e é pelo erro que o cliente
+      // Socket.IO agenda a próxima tentativa. Só fechar a conexão, sem erro, no meio do
+      // handshake, o deixaria parado até o tempo limite de conexão (20 s).
+      if ('socket' in client && client.socket instanceof EventTarget) {
+        client.socket.dispatchEvent(new Event('error'))
+      }
       client.close()
       return
     }
