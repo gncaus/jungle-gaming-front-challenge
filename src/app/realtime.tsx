@@ -14,9 +14,9 @@ import { announce } from '@/shared/lib/announce'
 import { setRealtimeConnected } from '@/shared/lib/realtime-status'
 
 /** Recursos privados cujo conteúdo depende de preço e disponibilidade dos NFTs. */
-const nftDependentResources = ['cart', 'quote']
+const nftDependentResources = ['cart', 'quote', 'favorites']
 
-/** Consultas que mudam quando um NFT muda: todo o catálogo, o carrinho e a cotação. */
+/** Consultas que mudam quando um NFT muda: todo o catálogo, o carrinho, a cotação e os favoritos. */
 function dependsOnNfts(query: Query): boolean {
   const [root, , resource] = query.queryKey
   return (

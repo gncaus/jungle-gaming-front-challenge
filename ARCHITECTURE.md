@@ -118,7 +118,7 @@ Base: `/api`. Autenticação: `Authorization: Bearer <token>`. Visitante: `X-Gue
 | Sessão | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | público |
 | | `GET /auth/session` | autenticado |
 | NFTs | `GET /nfts`, `GET /nfts/facets`, `GET /nfts/highlights`, `GET /nfts/:id` | público |
-| Favoritos | `GET /favorites`, `PUT /favorites/:nftId`, `DELETE /favorites/:nftId` | autenticado |
+| Favoritos | `GET /favorites`, `GET /favorites/nfts`, `PUT /favorites/:nftId`, `DELETE /favorites/:nftId` | autenticado |
 | Carrinho | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:itemId`, `DELETE /cart/items/:itemId` | visitante ou autenticado |
 | Cotação | `POST /quotes` | visitante ou autenticado |
 | Pedidos | `POST /orders` (header `Idempotency-Key`), `GET /orders`, `GET /orders/:id` | autenticado |
@@ -331,7 +331,7 @@ O layout é escuro e não há tema claro.
 - **Filtro selecionado:** além da cor, o item marcado ganha negrito e um ícone de confirmação, para o estado não depender só de cor.
 - **Indicadores do carrossel:** têm área de toque de 24 px, maior que os pontos de 8 px do layout, para atender ao tamanho mínimo de alvo.
 - **Itens fora do escopo do enunciado:** "Criadores" e "Aprenda" aparecem no menu, desabilitados e anunciados como "em breve". Os artigos do Diário da Cunhagem trazem "Artigo disponível em breve" no lugar do link "Ler mais". O formulário de novidades avisa que a inscrição não está disponível, em vez de simular sucesso. No rodapé, só as coleções são links; o restante é texto.
-- **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas. A barra de navegação inferior do mobile ainda não foi implementada.
+- **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas.
 - **Tela de carregamento:** o `index.html` traz a marca e "Carregando o marketplace…", exibidos até a aplicação iniciar. Não está no layout.
 - **Cards no mobile:** o nome reserva duas linhas, para a grade ter a mesma altura com skeletons e com dados.
 - **Ações no card:** o coração fica sempre visível no canto do card e, em telas largas, o botão de carrinho logo abaixo (adiciona uma unidade da edição padrão). No layout desktop eles aparecem ao passar o mouse, junto de um zoom, o que os esconderia de quem usa teclado ou toque. O zoom ficou de fora.
@@ -345,11 +345,12 @@ O layout é escuro e não há tema claro.
   - No mobile, "Comprar NFT" e o botão de carrinho ficam no fim das opções de compra, no fluxo da página. No frame eles ficam em uma barra fixa, que disputaria o lugar com a navegação inferior.
 - **Login e cadastro:** "Continuar com Google", "Continuar com Facebook" e "Esqueceu a senha?" aparecem como no layout e respondem com um aviso de indisponível.
 - **Com sessão:** o botão "Entrar" do cabeçalho dá lugar ao primeiro nome do usuário, que leva ao perfil, e a um botão de sair. O layout não desenha esse estado.
-- **Navegação inferior do mobile:** Início, Explorar, Carrinho e Perfil. O ícone de favoritos do layout ficou de fora: o enunciado não pede uma tela de favoritos, e eles já aparecem no card e no detalhe.
+- **Navegação inferior do mobile:** Início, Favoritos, o botão central (leva ao catálogo), Carrinho e Perfil, como no frame. O item em destaque é o da seção aberta; com o login aberto, o destaque vai para a conta. Telas que não pertencem a nenhuma seção (detalhe, pedido) não destacam nenhum item.
+- **Tela de favoritos** (`/favoritos`): não está no layout. Existe para o coração da barra ter destino; no desktop, chega-se a ela por "Lista de interesse", na navegação do perfil. Usa os cards do catálogo, e desfavoritar tira o card da tela na hora.
 - **Perfil e carteiras:**
   - O layout tem um único botão "Salvar" para os dados e a senha. A aplicação tem dois formulários, cada um com seu botão, para que um erro na senha não se confunda com o salvamento dos dados.
   - O campo "Nome ENS" é um campo de texto com a indicação "sem o .eth"; o layout mostra um seletor de sufixo com uma única opção.
-  - "Atividade", "Lista de interesse", "Ofertas", "Arquivos baixados" e "Suporte" aparecem na navegação lateral, desabilitados e anunciados como "em breve".
+  - "Atividade", "Ofertas", "Arquivos baixados" e "Suporte" aparecem na navegação lateral, desabilitados e anunciados como "em breve". "Lista de interesse" leva à tela de favoritos.
   - Sem frame mobile: a navegação lateral vira uma faixa com "Dados do perfil", "Carteiras" e "Sair", e os formulários passam a uma coluna.
   - Na tela de carteiras, a carteira salva aparece como resumo com "Editar"; o layout só desenha o formulário aberto.
 - **Carrinho:**

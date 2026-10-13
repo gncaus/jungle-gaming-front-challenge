@@ -1,12 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from '@/features/auth/hooks/use-session'
-import { addFavorite, fetchFavorites, removeFavorite } from '@/features/favorites/api/favorites-api'
+import {
+  addFavorite,
+  fetchFavoriteNfts,
+  fetchFavorites,
+  removeFavorite,
+} from '@/features/favorites/api/favorites-api'
 import type { Favorites } from '@/features/favorites/schemas'
 import { privateKey } from '@/shared/lib/query-keys'
 import { announce } from '@/shared/lib/announce'
 
 export const favoriteKeys = {
   list: (userId: string) => privateKey(userId, 'favorites'),
+  /** Fica sob a chave da lista, então é revalidada junto com ela a cada mudança. */
+  nfts: (userId: string) => privateKey(userId, 'favorites', 'nfts'),
 }
 
 /** Favoritos do usuário da sessão. Para visitantes, a consulta nem é feita. */
@@ -15,6 +22,16 @@ export function useFavorites() {
   return useQuery({
     queryKey: favoriteKeys.list(user?.id ?? ''),
     queryFn: ({ signal }) => fetchFavorites(signal),
+    enabled: user !== null,
+  })
+}
+
+/** Os NFTs favoritados, com os dados do card, para a tela de favoritos. */
+export function useFavoriteNfts() {
+  const { user } = useSession()
+  return useQuery({
+    queryKey: favoriteKeys.nfts(user?.id ?? ''),
+    queryFn: ({ signal }) => fetchFavoriteNfts(signal),
     enabled: user !== null,
   })
 }

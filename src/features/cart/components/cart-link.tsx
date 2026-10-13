@@ -4,13 +4,21 @@ import { useCart } from '@/features/cart/hooks/use-cart'
 import { cn } from '@/shared/lib/utils'
 
 /** Atalho para o carrinho com o número de itens. Lê a mesma consulta que a página do carrinho. */
-export function CartLink({ className, iconClassName }: { className?: string; iconClassName?: string }) {
+interface CartLinkProps {
+  className?: string
+  iconClassName?: string
+  /** Marca o link como a página atual, para quem navega por leitor de tela. */
+  current?: boolean
+}
+
+export function CartLink({ className, iconClassName, current = false }: CartLinkProps) {
   const { data } = useCart()
   const count = data?.itemCount ?? 0
 
   return (
     <Link
       to="/carrinho"
+      aria-current={current ? 'page' : undefined}
       aria-label={count === 0 ? 'Carrinho, vazio' : `Carrinho, ${count} ${count === 1 ? 'item' : 'itens'}`}
       className={cn('relative flex items-center justify-center transition-colors', className)}
     >

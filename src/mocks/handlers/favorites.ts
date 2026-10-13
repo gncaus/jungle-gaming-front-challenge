@@ -1,6 +1,6 @@
-import type { Favorites } from '@/features/favorites/schemas'
+import type { FavoriteNfts, Favorites } from '@/features/favorites/schemas'
 import { readDb, updateDb } from '@/mocks/db/store'
-import { findNft } from '@/mocks/domain/catalog'
+import { findNft, toSummary } from '@/mocks/domain/catalog'
 import { requireUser } from '@/mocks/domain/session'
 import { route } from '@/mocks/handlers/route'
 
@@ -10,6 +10,13 @@ function favoritesOf(userId: string): Favorites {
 
 export const favoriteHandlers = [
   route<Favorites>('get', '/favorites', ({ request }) => favoritesOf(requireUser(request).id)),
+
+  route<FavoriteNfts>('get', '/favorites/nfts', ({ request }) => {
+    const state = readDb()
+    const ids = state.favorites[requireUser(request).id] ?? []
+    // O favorito mais recente vem primeiro.
+    return { items: [...ids].reverse().map((id) => toSummary(findNft(state, id))) }
+  }),
 
   route<Favorites>('put', '/favorites/:nftId', ({ request, param }) => {
     const user = requireUser(request)

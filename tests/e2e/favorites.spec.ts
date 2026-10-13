@@ -122,3 +122,59 @@ test('o coração do card favorita direto no catálogo', async ({ page, isMobile
   await page.goto('/nft/sage-nomad-009')
   await expect(favoriteButton(page, 'Sage Nomad #009')).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('tela de favoritos lista os NFTs do usuário e remove ao desfavoritar', async ({ page }) => {
+  await openApp(page, '/favoritos')
+  await submitLogin(page, users.ana)
+  await expect(page).toHaveURL(/\/favoritos$/)
+
+  const main = page.getByRole('main')
+  await expect(main.getByText('2 NFTs favoritados')).toBeVisible()
+  await expect(main.getByRole('link', { name: /Neon Vessel #552/ })).toBeVisible()
+  await expect(main.getByRole('link', { name: /Royal Emerald #003/ })).toBeVisible()
+
+  await main.getByRole('button', { name: 'Favoritar Neon Vessel #552' }).click()
+  await expect(main.getByRole('link', { name: /Neon Vessel #552/ })).toBeHidden()
+  await expect(main.getByText('1 NFT favoritado')).toBeVisible()
+
+  await page.reload()
+  await expect(main.getByText('1 NFT favoritado')).toBeVisible()
+  await expect(main.getByRole('link', { name: /Neon Vessel #552/ })).toBeHidden()
+})
+
+test('tela de favoritos vazia convida a explorar o catálogo', async ({ page }) => {
+  await openApp(page, '/favoritos')
+  await submitLogin(page, users.bruno)
+
+  const main = page.getByRole('main')
+  await expect(main.getByText('Você ainda não tem favoritos')).toBeVisible()
+  await main.getByRole('link', { name: 'Explorar o catálogo' }).click()
+  await expect(page).toHaveURL(/\/#catalogo$/)
+})
+
+test('barra inferior do mobile destaca a seção aberta', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'A barra inferior só existe no mobile.')
+  await openApp(page)
+  const nav = page.getByRole('navigation', { name: 'Principal' })
+  const current = nav.locator('[aria-current="page"]')
+
+  await expect(current).toHaveAccessibleName('Início')
+
+  await nav.getByRole('link', { name: /^Carrinho/ }).click()
+  await expect(page).toHaveURL(/\/carrinho$/)
+  await expect(current).toHaveAccessibleName(/^Carrinho/)
+
+  // Favoritos exige sessão: o login abre e, depois dele, a tela pedida aparece em destaque.
+  await nav.getByRole('link', { name: 'Favoritos' }).click()
+  await submitLogin(page, users.ana)
+  await expect(page).toHaveURL(/\/favoritos$/)
+  await expect(current).toHaveAccessibleName('Favoritos')
+
+  await nav.getByRole('link', { name: 'Perfil' }).click()
+  await expect(current).toHaveAccessibleName('Perfil')
+  await page.getByRole('main').getByRole('link', { name: 'Carteiras' }).click()
+  await expect(current).toHaveAccessibleName('Perfil')
+
+  await nav.getByRole('link', { name: 'Início' }).click()
+  await expect(current).toHaveAccessibleName('Início')
+})

@@ -10,7 +10,6 @@ const activeProps = { className: 'border-primary! font-bold', 'aria-current': 'p
 /** Seções do layout que estão fora do escopo da entrega. */
 const upcomingSections = [
   { label: 'Atividade', icon: ShoppingCart },
-  { label: 'Lista de interesse', icon: Heart },
   { label: 'Ofertas', icon: Tag },
   { label: 'Arquivos baixados', icon: Download },
   { label: 'Suporte', icon: LifeBuoy },
@@ -39,6 +38,13 @@ export function ProfileNav() {
             <Link to="/perfil/carteiras" activeProps={activeProps} className={linkClass}>
               <Wallet className="hidden size-5 md:block" aria-hidden="true" />
               Carteiras
+            </Link>
+          </li>
+          {/* No mobile, os favoritos estão na barra de navegação inferior. */}
+          <li className="hidden md:block">
+            <Link to="/favoritos" className={linkClass}>
+              <Heart className="size-5" aria-hidden="true" />
+              Lista de interesse
             </Link>
           </li>
           {upcomingSections.map(({ label, icon: Icon }) => (

@@ -105,6 +105,13 @@ Atualizado em 13/10/2026, ao fim da fatia 9.
 - Carteiras principal e secundária: cadastro, resumo, edição e "Igual à carteira principal".
 - 224 testes no total, 1 pulado no desktop por ser só do mobile.
 
+**Ajuste — barra inferior do mobile e favoritos**
+
+- Barra inferior refeita conforme o frame: Início, Favoritos, botão central, Carrinho e Perfil, com ícones preenchidos e destaque na seção aberta.
+- Tela `/favoritos` (privada), com `GET /favorites/nfts` no mock; no desktop, acessível por "Lista de interesse" no perfil.
+- Baselines visuais do mobile regeneradas.
+- 230 testes no total, 2 pulados no desktop por serem só do mobile.
+
 ## Em andamento
 
 Nada.
@@ -136,7 +143,7 @@ Fatia 10: fechamento — rodada de otimização do Lighthouse mobile e relatóri
 
 - O carrinho não usa atualização otimista: o total depende da cotação, então a tela espera a API.
 - O cupom aplicado vive na URL do carrinho (`?cupom=`).
-- Sem tela de favoritos; a barra do mobile tem Início, Explorar, Carrinho e Perfil.
+- Há tela de favoritos (`/favoritos`), criada para o coração da barra do mobile ter destino; a barra segue o frame.
 
 - O pagamento tem três passos explícitos (salvar carteira, conectar, confirmar), com o motivo do bloqueio escrito junto do botão.
 - A chave de idempotência é por conteúdo do pedido e fica no navegador, sob o id do usuário.
