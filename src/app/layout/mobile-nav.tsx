@@ -38,8 +38,18 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Principal"
-      className="bg-card fixed inset-x-0 bottom-0 z-40 grid h-20 grid-cols-5 place-items-center rounded-t-[36px] px-3 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-[84px] grid-cols-5 place-items-center px-3 md:hidden"
     >
+      {/* O fundo é uma camada própria para poder ter o recorte circular em volta do botão central. */}
+      {/* Dentro do recorte, um véu escuro deixa o conteúdo da página aparecer só de leve. */}
+      <span
+        aria-hidden="true"
+        className="bg-background/80 absolute inset-0 -z-10 [mask-image:radial-gradient(circle_42px_at_50%_0,black_41px,transparent_42px)]"
+      />
+      <span
+        aria-hidden="true"
+        className="bg-card absolute inset-0 -z-10 rounded-t-[40px] [mask-image:radial-gradient(circle_42px_at_50%_0,transparent_41px,black_42px)]"
+      />
       <Link to="/" aria-label="Início" aria-current={currentPage('home')} className={cn(itemClass, tone('home'))}>
         <House className={iconClass} aria-hidden="true" />
       </Link>
@@ -59,9 +69,9 @@ export function MobileNav() {
         // Sem isto, o roteador marcaria este link como página atual junto com "Início".
         activeOptions={{ includeHash: true }}
         aria-label="Explorar o catálogo"
-        className="from-primary-light to-primary-dark text-primary-foreground border-background -mt-20 flex size-19 items-center justify-center rounded-full border-[6px] bg-linear-to-b transition-opacity hover:opacity-90"
+        className="from-primary-light/95 to-primary/65 text-foreground relative -top-[42px] flex size-[58px] items-center justify-center rounded-full bg-linear-to-br transition-opacity hover:opacity-90"
       >
-        <ScanLine className="size-7" aria-hidden="true" />
+        <ScanLine className="size-6" strokeWidth={1.5} aria-hidden="true" />
       </Link>
 
       <CartLink className={cn(itemClass, tone('cart'))} iconClassName={iconClass} current={current === 'cart'} />
