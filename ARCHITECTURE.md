@@ -382,7 +382,7 @@ O layout é escuro e não há tema claro.
 - Cada teste começa em um contexto de navegador novo, então o banco simulado parte sempre da semente.
 - **Testes de interface** (`tests/e2e/*.spec.ts`) rodam nos dois projetos e verificam o que aparece na tela.
 - **Testes de contrato** (`tests/e2e/api/`) rodam só no projeto desktop. Chamam a API com `fetch` de dentro da página, para passar pelo service worker do MSW, e abrem uma rota sem tela para que as consultas da própria aplicação não se misturem às do teste.
-- **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock.
+- **Tempo real:** os testes abrem conexões com o `socket.io-client` real dentro da página e disparam mudanças pelo `window.__mockControl`, que age no servidor de socket do mock. Os testes que vencem a sessão e recarregam a página esperam antes a primeira conexão de tempo real e as reconsultas que ela dispara (`connectedUsers` no `__mockControl`); do contrário, uma dessas reconsultas receberia 401 na página antiga, logo antes do refresh.
 - **Regressão visual** (`tests/e2e/visual.spec.ts`): página inicial, detalhe, carrinho e pagamento, com tolerância de 0,05% dos pixels. As imagens de referência ficam versionadas ao lado do teste e foram geradas no Windows. Em outro sistema a renderização de fonte difere; regenere com `npm run test:e2e -- visual --update-snapshots`.
 
 ## Lighthouse

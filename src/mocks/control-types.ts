@@ -31,6 +31,8 @@ export interface MockControl {
   getEmittedEvents(): EmittedEventInfo[]
   /** Reenvia pelo servidor de socket um evento já emitido (duplicata ou evento antigo). */
   replayEvent(eventId: string): void
+  /** Usuário de cada conexão de socket aberta agora (`null` para visitante). */
+  connectedUsers(): (string | null)[]
   /** Derruba as conexões de socket; o cliente reconecta sozinho. */
   disconnectSockets(): void
   /** Com `false`, derruba as conexões de socket e recusa novas até voltar a `true`. */

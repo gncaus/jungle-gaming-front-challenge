@@ -4,6 +4,7 @@ import { resetDb, updateDb } from '@/mocks/db/store'
 import { findEdition, findNft } from '@/mocks/domain/catalog'
 import { getScenarioName, setScenario } from '@/mocks/scenarios/state'
 import {
+  connectedUsers,
   disconnectSockets,
   emittedEvents,
   replayEvent,
@@ -42,6 +43,7 @@ const control: MockControl = {
   getEmittedEvents: () =>
     emittedEvents().map(({ id, type, resourceId, version }) => ({ id, type, resourceId, version })),
   replayEvent,
+  connectedUsers,
   disconnectSockets,
   setSocketAvailable,
 }

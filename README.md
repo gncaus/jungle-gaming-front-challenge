@@ -121,6 +121,7 @@ window.__mockControl.setSocketAvailable(false)    // mantém o socket fora do ar
 window.__mockControl.setSocketAvailable(true)     // volta a aceitar conexões
 window.__mockControl.getEmittedEvents()           // eventos já emitidos nesta página
 window.__mockControl.replayEvent('nft:emerald-ape-042:v2') // reenvia um evento (duplicata ou antigo)
+window.__mockControl.connectedUsers()            // usuários das conexões de socket abertas
 ```
 
 Um evento reenviado é descartado pelo cliente: nada é consultado de novo e nenhum aviso se repete. Com o socket fora do ar, a tela de um pedido pendente passa a consultar a API até a conexão voltar.

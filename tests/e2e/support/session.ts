@@ -80,3 +80,31 @@ export async function expectSignedOut(page: Page, isMobile: boolean): Promise<vo
 export async function storedToken(page: Page): Promise<string | null> {
   return page.evaluate(() => localStorage.getItem('kurio.session.token'))
 }
+
+/**
+ * Espera a conexão de tempo real do usuário abrir e as consultas que ela dispara terminarem.
+ * A primeira conexão abre um instante depois da página e reconsulta a API: vencer a sessão
+ * antes disso faria essa reconsulta receber 401 na página antiga, logo antes de um refresh.
+ */
+export async function waitForRealtimeSettled(page: Page, userId: string): Promise<void> {
+  let pending = 0
+  const isApi = (url: string) => new URL(url).pathname.startsWith('/api/')
+  page.on('request', (request) => {
+    if (isApi(request.url())) pending += 1
+  })
+  const finished = (request: { url(): string }) => {
+    if (isApi(request.url())) pending -= 1
+  }
+  page.on('requestfinished', finished)
+  page.on('requestfailed', finished)
+
+  await expect
+    .poll(() => page.evaluate(() => window.__mockControl?.connectedUsers() ?? []), { timeout: 10_000 })
+    .toContain(userId)
+  // Sem chamadas à API em andamento por duas verificações seguidas.
+  await expect.poll(async () => {
+    const before = pending
+    await page.waitForTimeout(250)
+    return before <= 0 && pending <= 0
+  }).toBe(true)
+}

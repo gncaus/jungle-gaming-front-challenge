@@ -160,6 +160,11 @@ export function replayEvent(eventId: string): void {
   deliver(emission)
 }
 
+/** Usuário de cada conexão aberta (`null` para visitante). */
+export function connectedUsers(): (string | null)[] {
+  return [...connections.values()].map((connection) => connection.userId)
+}
+
 /** Derruba todas as conexões. O cliente tenta reconectar sozinho. */
 export function disconnectSockets(): void {
   for (const connection of [...connections.values()]) {

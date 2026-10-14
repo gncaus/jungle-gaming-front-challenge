@@ -9,6 +9,7 @@ import {
   signIn,
   storedToken,
   submitLogin,
+  waitForRealtimeSettled,
 } from './support/session'
 
 /** O e-mail no formulário do perfil identifica de quem são os dados na tela. */
@@ -94,6 +95,7 @@ test('sessão que expira em rota privada reabre o login e retoma a tela', async 
   await signIn(page, isMobile, users.ana)
   await profileLink(page, isMobile).click()
   await expect(profileEmail(page)).toHaveValue('ana@kurio.test')
+  await waitForRealtimeSettled(page, users.ana.id)
 
   await mockControl(page, 'expireSessions')
   await page.reload()
@@ -119,6 +121,7 @@ test('sessão que expira em página pública pede login sem tirar o usuário do 
   const favoritesLoaded = page.waitForResponse((response) => response.url().endsWith('/api/favorites'))
   await signIn(page, isMobile, users.ana)
   await favoritesLoaded
+  await waitForRealtimeSettled(page, users.ana.id)
 
   await mockControl(page, 'expireSessions')
   await page.reload()
