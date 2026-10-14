@@ -395,10 +395,10 @@ A configuração versionada está em `lighthouse/config.mjs`. Os relatórios da 
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Início | mobile | 90 | 100 | 100 | 100 | 3,32 s | 0 | 166 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 0,73 s | 0 | 0 ms |
-| Detalhe | mobile | 91 | 100 | 100 | 100 | 3,38 s | 0 | 91 ms |
-| Detalhe | desktop | 100 | 100 | 100 | 100 | 0,75 s | 0 | 0 ms |
+| Início | mobile | 90 | 100 | 100 | 100 | 3,31 s | 0 | 167 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 0,74 s | 0 | 0 ms |
+| Detalhe | mobile | 91 | 100 | 100 | 100 | 3,39 s | 0 | 118 ms |
+| Detalhe | desktop | 100 | 100 | 100 | 100 | 0,76 s | 0 | 0 ms |
 
 Condições: Lighthouse 13.5.0 com os perfis padrão (mobile com throttling simulado de rede e CPU 4×; desktop com o perfil `desktop-config`), Chrome headless 155, Node 24, Windows 10, contra `vite preview` com o build de produção e o cenário padrão dos mocks. Os valores completos de ambiente estão em `lighthouse/reports/summary.md`.
 
