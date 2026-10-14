@@ -27,7 +27,8 @@ function CartPage() {
   }
 
   return (
-    <div className="page-container pb-4">
+    // No mobile a tela ocupa a altura toda, para o resumo ficar na base mesmo com poucos itens.
+    <div className="page-container pb-4 max-md:flex max-md:min-h-dvh max-md:flex-col max-md:pb-0">
       <div className="relative flex items-center justify-center py-4 md:hidden">
         <Link
           to="/"
@@ -98,7 +99,7 @@ function CartPage() {
       )}
 
       {cart && cart.items.length > 0 && (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 max-md:flex-1 max-md:grid-rows-[auto_1fr] md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
           <section aria-labelledby="cart-items-title">
             <h2 id="cart-items-title" className="sr-only">
               Itens do carrinho
@@ -126,7 +127,11 @@ function CartPage() {
             onCouponChange={changeCoupon}
             actions={
               <>
-                <Button asChild size="lg" className="h-[60px] w-full rounded-full md:h-10 md:rounded-sm">
+                <Button
+                  asChild
+                  size="lg"
+                  className="to-primary-dark h-[60px] w-full rounded-full from-[#d28a4c] max-md:bg-linear-to-r md:h-10 md:rounded-sm"
+                >
                   <Link to="/pagamento" search={{ cupom: couponCode ?? undefined }}>
                     Conectar e finalizar
                   </Link>
@@ -145,8 +150,9 @@ function CartPage() {
         </div>
       )}
 
+      {/* Como no layout, as sugestões só aparecem a partir de 768 px. */}
       {cart && (
-        <div className="mt-16 md:mt-[100px]">
+        <div className="mt-16 max-md:hidden md:mt-[100px]">
           <NftShelf
             title="Colecionadores também viram"
             filter={{}}

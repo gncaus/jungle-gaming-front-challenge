@@ -18,7 +18,13 @@ const buttonClass =
 
 const sizes = {
   md: { button: 'h-12 w-8 rounded-xl', icon: 'size-5', value: 'min-w-8 text-lg' },
-  sm: { button: 'size-7 rounded-full', icon: 'size-4', value: 'min-w-7 text-base' },
+  // No mobile, as linhas do carrinho usam círculos discretos, como no layout.
+  sm: {
+    button:
+      'size-7 rounded-full max-md:border max-md:border-border-soft max-md:bg-surface-raised max-md:text-foreground max-md:hover:bg-surface-dark max-md:disabled:hover:bg-surface-raised',
+    icon: 'size-4',
+    value: 'min-w-7 text-base',
+  },
 }
 
 /** Quantidade inteira entre 1 e `max`, com botões de menos e mais. */

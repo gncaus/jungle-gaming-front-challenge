@@ -47,7 +47,7 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
     <section
       aria-labelledby={`${fieldId}-title`}
       // No mobile, como no layout, o resumo é uma folha presa à base da tela.
-      className="bg-card sticky bottom-0 z-30 -mx-6 rounded-t-[28px] p-6 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:mx-0 md:rounded-none md:bg-transparent md:p-0 md:shadow-none"
+      className="bg-card sticky bottom-0 z-30 -mx-6 self-end rounded-t-[28px] p-6 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:mx-0 md:rounded-none md:bg-transparent md:p-0 md:shadow-none"
     >
       <h2 id={`${fieldId}-title`} className="hidden border-b pb-3 text-lg font-bold md:block">
         Resumo da carteira
@@ -57,7 +57,8 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
         <label htmlFor={fieldId} className="mb-2 hidden text-sm font-bold md:block">
           Código promocional
         </label>
-        <div className="flex">
+        {/* No mobile, como no layout, um campo em pílula com o botão por dentro. */}
+        <div className="max-md:border-border max-md:bg-background flex max-md:rounded-full max-md:border max-md:p-1">
           <input
             id={fieldId}
             name="coupon"
@@ -67,12 +68,12 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
             placeholder="Digite o código promocional..."
             autoComplete="off"
             maxLength={40}
-            className="border-primary bg-background placeholder:text-brand-secondary h-12 min-w-0 flex-1 rounded-l-full border border-r-0 px-3 text-xs uppercase placeholder:normal-case md:h-10 md:rounded-l-sm md:px-2"
+            className="placeholder:text-brand-secondary md:border-primary md:bg-background h-11 min-w-0 flex-1 bg-transparent px-3 text-xs uppercase placeholder:normal-case md:h-10 md:rounded-l-sm md:border md:border-r-0 md:px-2"
           />
           <Button
             type="submit"
             disabled={applyCoupon.isPending}
-            className="h-12 rounded-l-none rounded-r-full px-4 text-base md:h-10 md:rounded-r-sm"
+            className="to-primary h-11 rounded-full from-[#9b6a45] px-5 text-base text-foreground max-md:bg-linear-to-r md:h-10 md:text-primary-foreground md:rounded-l-none md:rounded-r-sm"
           >
             {applyCoupon.isPending ? 'Aplicando…' : 'Aplicar'}
           </Button>

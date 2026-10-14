@@ -27,12 +27,15 @@ test('detalhe do NFT', async ({ page }) => {
   await expect(page).toHaveScreenshot('detalhe.png', { fullPage: true })
 })
 
-test('carrinho', async ({ page }) => {
+test('carrinho', async ({ page, isMobile }) => {
   await openApp(page, '/carrinho')
   await seedCart(page, figmaCart)
   await page.reload()
   await expectTotals(page, { subtotal: '26.83', total: '26.846' })
-  await expect(page.getByRole('region', { name: 'Colecionadores também viram' }).getByRole('article')).toHaveCount(5)
+  // No mobile, como no layout, não há sugestões abaixo do carrinho.
+  if (!isMobile) {
+    await expect(page.getByRole('region', { name: 'Colecionadores também viram' }).getByRole('article')).toHaveCount(5)
+  }
   await settlePage(page)
 
   await expect(page).toHaveScreenshot('carrinho.png', { fullPage: true })

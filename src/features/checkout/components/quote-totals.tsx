@@ -2,7 +2,7 @@ import type { Quote } from '@/features/checkout/schemas'
 import { formatEth } from '@/shared/lib/money'
 import { Skeleton } from '@/shared/ui/skeleton'
 
-const rowClass = 'flex items-baseline justify-between gap-4 text-sm md:text-[15px]'
+const rowClass = 'flex items-baseline justify-between gap-4 text-[15px]'
 
 /** Subtotal, desconto, taxa de rede e total, exatamente como vieram da cotação. */
 export function QuoteTotals({ quote }: { quote: Quote }) {
@@ -10,7 +10,7 @@ export function QuoteTotals({ quote }: { quote: Quote }) {
     <dl className="flex flex-col gap-3" data-testid="cart-totals">
       <div className={rowClass}>
         <dt>Subtotal</dt>
-        <dd className="text-lg">{formatEth(quote.subtotal)}</dd>
+        <dd className="md:text-lg">{formatEth(quote.subtotal)}</dd>
       </div>
       <div className={rowClass}>
         <dt className={quote.coupon ? undefined : 'whitespace-nowrap'}>
@@ -20,7 +20,7 @@ export function QuoteTotals({ quote }: { quote: Quote }) {
       </div>
       <div className={rowClass}>
         <dt>Taxa de rede</dt>
-        <dd className="text-right text-lg">
+        <dd className="text-right md:text-lg">
           {formatEth(quote.networkFee)}
           <span className="text-text-accent block text-xs">Taxa estimada</span>
         </dd>
