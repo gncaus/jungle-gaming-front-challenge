@@ -4,7 +4,7 @@ Solução do desafio frontend descrito em [DESAFIO.md](DESAFIO.md). A aplicaçã
 
 **Aplicação publicada:** https://jungle-gaming-front-challenge.vercel.app
 
-> Em construção. O estado atual de cada fluxo está em [docs/STATUS.md](docs/STATUS.md).
+Telas: início com catálogo, detalhe do NFT, carrinho, pagamento, confirmação do pedido, login e cadastro, perfil do colecionador, carteiras e favoritos.
 
 ## Requisitos
 
@@ -124,6 +124,25 @@ window.__mockControl.replayEvent('nft:emerald-ape-042:v2') // reenvia um evento 
 ```
 
 Um evento reenviado é descartado pelo cliente: nada é consultado de novo e nenhum aviso se repete. Com o socket fora do ar, a tela de um pedido pendente passa a consultar a API até a conexão voltar.
+
+## Como reproduzir os fluxos de falha
+
+Entre com uma das contas fictícias e use os cenários acima. Nas linhas do pagamento, chegue à tela com a carteira conectada e troque o cenário pelo console, com `window.__mockControl.setScenario('<nome>')`. Para voltar ao normal, `setScenario('default')` ou `?scenario=default`.
+
+| Fluxo | Como reproduzir | O que esperar |
+| --- | --- | --- |
+| Carregamento lento | Abra `/?scenario=slow` | Skeletons com shimmer no catálogo, no detalhe e no carrinho |
+| Falha ao carregar e nova tentativa | Abra `/?scenario=server-error`; depois rode `window.__mockControl.setScenario('default')` no console e clique em "Tentar novamente" | Mensagem de erro e recuperação sem recarregar |
+| Falha transitória | Abra `/?scenario=flaky` | O catálogo carrega sozinho depois de duas tentativas |
+| Favorito que falha | Com sessão, abra um NFT com `?scenario=favorites-failure` e favorite | O coração acende, volta ao estado anterior e um aviso explica a falha |
+| Sessão expirada | Com sessão, rode `window.__mockControl.expireSessions()` e navegue | O login reabre e devolve você à mesma tela |
+| Cupom inválido ou expirado | No carrinho, aplique `NADA` ou `VERAO2025` | Recusa com o motivo, sem alterar o total |
+| Preço alterado na compra | No pagamento, rode `updateEdition` (exemplo acima) com um item do carrinho | A tela mostra o total antigo e o novo e exige nova confirmação |
+| Edição esgotada na compra | No pagamento, `setScenario('sold-out')` e confirme | O pedido não é criado; a tela pede o ajuste das quantidades e o carrinho marca a edição como esgotada |
+| Timeout após criar o pedido | No pagamento, `setScenario('order-timeout')` e confirme; depois confirme de novo | A tela avisa que não sabe se o pedido foi criado; a segunda tentativa recupera o mesmo pedido, sem compra duplicada |
+| Pagamento recusado | No pagamento, `setScenario('payment-declined')` e confirme | Tela de recusa; o carrinho continua intacto |
+| Carteira recusa a conexão | No pagamento, com a carteira desconectada, `setScenario('wallet-rejected')` e clique em "Conectar carteira" | Aviso de recusa; a compra continua bloqueada |
+| Socket cai com pedido pendente | Confirme a compra e rode `window.__mockControl.setSocketAvailable(false)` em seguida | O pedido chega ao estado final pela API, sem nova compra |
 
 ## Imagens
 

@@ -300,6 +300,7 @@ Os testes e o `window.__mockControl` também seguem essa regra: alterar uma edi�
 - **Caminho próprio.** O MSW remove o prefixo `/socket.io/` da URL antes de procurar o handler, o que faria a conexão se confundir com qualquer outro WebSocket da origem (o HMR do Vite, por exemplo). Com `/realtime/` o handler casa só com o socket da aplicação.
 - **Sem salas nem broadcast.** O binding não implementa esses recursos. O mock guarda as conexões abertas e escolhe o destino de cada evento.
 - **Heartbeat manual.** O binding responde ao handshake, mas não envia os pings que o cliente espera do servidor. O mock envia um ping a cada 20 s; sem isso o cliente fecharia a conexão a cada 30 s.
+- **Primeira conexão adiada.** A primeira conexão da página abre 1,5 s depois de a API simulada estar pronta (ver "Lighthouse"). Um evento emitido nesse intervalo não chega, e a reconciliação na conexão traz o estado atual.
 - **Sem reentrega.** Um evento emitido enquanto o cliente estava desconectado se perde. Por isso, a cada conexão do socket (a primeira e todas as reconexões) o cliente revalida pela API REST as consultas de catálogo, carrinho, cotação e pedidos que estão em uso.
 - **Recusa com erro.** Com o socket fora do ar (`setSocketAvailable(false)`), o mock dispara um erro no WebSocket antes de fechá-lo, como acontece com um servidor inacessível. Um fechamento limpo no meio do handshake deixaria o cliente Socket.IO parado até o tempo limite de conexão (20 s) antes de tentar de novo.
 - **Uma aba por vez.** A interceptação acontece dentro da página, não no service worker. Um evento gerado em uma aba não chega às outras. O banco é compartilhado entre abas (`localStorage`), então a outra aba vê o estado novo na próxima consulta REST.
@@ -384,16 +385,30 @@ O layout é escuro e não há tema claro.
 
 `npm run lighthouse` faz o build, sobe o `vite preview` em uma porta própria e audita cada página em dois perfis (mobile e desktop), três vezes cada, com um Chrome novo por execução. O script grava os relatórios HTML e JSON de cada execução e um resumo com as medianas, LCP, CLS, TBT, versões e ambiente em `lighthouse/reports/`.
 
-A configuração versionada está em `lighthouse/config.mjs`.
+A configuração versionada está em `lighthouse/config.mjs`. Os relatórios da medição de entrega estão versionados em `lighthouse/reports/` (HTML e JSON de cada execução, `summary.md` e `summary.json`).
+
+### Resultado (mediana de 3 execuções)
+
+| Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Início | mobile | 91 | 100 | 100 | 100 | 3,24 s | 0 | 163 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 0,75 s | 0 | 0 ms |
+| Detalhe | mobile | 92 | 100 | 100 | 100 | 3,28 s | 0 | 104 ms |
+| Detalhe | desktop | 100 | 100 | 100 | 100 | 0,77 s | 0 | 0 ms |
+
+Condições: Lighthouse 13.5.0 com os perfis padrão (mobile com throttling simulado de rede e CPU 4×; desktop com o perfil `desktop-config`), Chrome headless 155, Node 24, Windows 10, contra `vite preview` com o build de produção e o cenário padrão dos mocks. Os valores completos de ambiente estão em `lighthouse/reports/summary.md`.
+
+**Análise do mobile.** Todas as metas são atingidas, mas a performance mobile fica perto do limite e as execuções isoladas variam entre 89 e 92. O LCP é a arte do primeiro card (início) ou da galeria (detalhe), e ela só pode começar a carregar depois de uma cadeia: o JavaScript da aplicação e do mock (cerca de 230 KB comprimidos, dos quais 174 KB são React, router, Query, zod, Axios e decimal.js), o service worker do MSW, a resposta da API simulada e, por fim, a imagem. Num backend real, a API não custaria JavaScript no cliente; aqui o mock é parte da entrega e é medido junto, como pede o enunciado. A variação entre execuções vem principalmente do momento em que a primeira pintura acontece em relação à execução do JavaScript, que muda de uma execução para outra mesmo sem mudança no código.
 
 ### O que foi feito pelo desempenho
 
 O mock roda no navegador, então o JavaScript dele faz parte do carregamento de toda página. As medidas abaixo tratam disso sem tirar nada da entrega:
 
 - **Carregamento em paralelo.** O ponto de entrada dispara a aplicação e o mock ao mesmo tempo, e um plugin em `vite.config.ts` anuncia esses chunks no HTML com `modulepreload`, para o download começar junto com o HTML.
+- **Chunk da rota aberta pré-carregado.** O mesmo plugin gera um script curto no HTML que, pelo endereço, pré-carrega só os chunks da rota que o usuário abriu. Sem isso, o navegador só os descobria depois de baixar e executar o JavaScript principal.
 - **Primeira pintura sem JavaScript.** O `index.html` traz uma tela de carregamento, e os `modulepreload` têm prioridade baixa para não disputar banda com o CSS e a fonte.
 - **Biblioteca de cookies do MSW removida** do bundle, como descrito em "API simulada".
-- **Socket sob demanda.** O `socket.io-client` fica fora do bundle inicial.
+- **Socket sob demanda e depois da primeira tela.** O `socket.io-client` fica fora do bundle inicial, e a primeira conexão da página espera 1,5 s depois de a API estar pronta, para não disputar rede e processamento com a primeira tela. O que mudar nesse intervalo é coberto pela reconciliação via REST que acontece a cada conexão; as reconexões seguintes (login, logout, queda) são imediatas.
 - **Imagens.** WebP em três larguras com `srcset` e `sizes`, dimensões declaradas, carregamento sob demanda abaixo da dobra e prioridade alta só para a arte do topo e a primeira linha de cards.
 - **Fonte** servida da própria origem, com `preload` e `font-display: swap`.
 - **Divisão de código por rota**, feita pelo plugin do router.
@@ -401,4 +416,5 @@ O mock roda no navegador, então o JavaScript dele faz parte do carregamento de 
 - **Bibliotecas e código comum agrupados** em dois arquivos (`vendor` e `common`), em vez de muitos chunks pequenos, cada um com sua ida ao servidor.
 - **Filtros sob demanda.** O slider e o painel lateral não fazem parte da primeira pintura: são baixados à parte, com um lugar reservado do mesmo tamanho.
 - **Seções abaixo da dobra adiadas** com `content-visibility: auto` (banners e Diário da Cunhagem): o navegador só as monta, e baixa suas imagens, quando o usuário se aproxima.
+- **Cards fora da primeira linha montados em seguida.** Quando o catálogo chega, só a primeira linha de cards é montada na hora; o restante entra logo depois em uma renderização interrompível do React (`useDeferredValue`), com o skeleton guardando o lugar. A chegada dos dados deixa de ser uma tarefa longa.
 - **Atributo `loading` antes de `src`.** O React aplica os atributos na ordem em que aparecem, e o navegador começa o download ao receber `src`; com `loading="lazy"` depois, a imagem era baixada na hora.

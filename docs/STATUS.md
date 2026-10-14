@@ -1,6 +1,6 @@
 # Status
 
-Atualizado em 13/10/2026, ao fim da fatia 9.
+Atualizado em 13/10/2026, ao fim da fatia 10.
 
 ## Feito
 
@@ -112,13 +112,39 @@ Atualizado em 13/10/2026, ao fim da fatia 9.
 - Baselines visuais do mobile regeneradas.
 - 230 testes no total, 2 pulados no desktop por serem só do mobile.
 
+**Fatia 10 — fechamento**
+
+- Lighthouse mobile de 89–90 para 91 (início) e 92 (detalhe): primeira conexão do socket depois da primeira tela, pré-carregamento do chunk da rota aberta e cards fora da primeira linha montados em renderização interrompível. Desktop em 100; acessibilidade, boas práticas e SEO em 100 nas quatro medições.
+- Relatórios do Lighthouse versionados em `lighthouse/reports/`, com análise no `ARCHITECTURE.md`.
+- Os 12 cenários da seção 9 do enunciado conferidos contra a suíte (mapa abaixo).
+- Cabeçalho: nenhum item fica em destaque fora da página inicial.
+- README com o passo a passo para reproduzir cada fluxo de falha.
+- 230 testes no total, 2 pulados no desktop por serem só do mobile.
+
+### Cenários da seção 9 e onde estão testados
+
+| # | Cenário | Testes |
+| --- | --- | --- |
+| 1 | Busca, filtros, ordenação, paginação e histórico | `catalog.spec.ts` |
+| 2 | Acesso direto ao detalhe e recurso inexistente | `detail.spec.ts`, `catalog.spec.ts` (NFT inexistente e 404) |
+| 3 | Cadastro, login, expiração, logout e troca de usuário | `auth.spec.ts` |
+| 4 | Favoritos, falha de mutation e recuperação | `favorites.spec.ts` |
+| 5 | Carrinho, quantidades, remoção, cupom, persistência | `cart.spec.ts` |
+| 6 | Compra completa até o recibo | `checkout.spec.ts` |
+| 7 | Pagamento recusado, clique repetido, timeout | `checkout.spec.ts`, `realtime.spec.ts` |
+| 8 | Perfil, avatar, senha e carteiras | `profile.spec.ts`, `checkout.spec.ts` (carteira no pagamento) |
+| 9 | Preço e disponibilidade via Socket.IO no checkout | `checkout.spec.ts`, `cart.spec.ts` |
+| 10 | Duplicados, antigos, desconexão e pedido pendente | `realtime.spec.ts`, `api/realtime.spec.ts`, `checkout.spec.ts` |
+| 11 | Teclado, foco de diálogos e validação | `auth.spec.ts`, `catalog.spec.ts`, `detail.spec.ts`, `profile.spec.ts` |
+| 12 | Skeletons, falha e nova tentativa | `catalog.spec.ts`, `detail.spec.ts`, `cart.spec.ts` |
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Fatia 10: fechamento — rodada de otimização do Lighthouse mobile e relatórios versionados, revisão de acessibilidade e mobile, conferência dos 12 cenários do enunciado, documentação final e deploy.
+Entrega: conferir o checkout limpo e o deploy final.
 
 ## Decisões
 
@@ -155,9 +181,10 @@ Fatia 10: fechamento — rodada de otimização do Lighthouse mobile e relatóri
 - Dados do perfil e senha são dois formulários, cada um com seu botão; o layout tem um só "Salvar".
 - O avatar é gravado na hora, fora do "Salvar".
 
+- A primeira conexão de tempo real da página espera 1,5 s; a reconciliação via REST na conexão cobre esse intervalo.
+
 ## Pendências
 
-- **Lighthouse mobile:** 90 nas duas páginas, sem folga sobre a meta (era 92 antes do carrinho, que acrescentou código e uma consulta em toda página). Precisa de uma rodada de otimização antes da entrega: zod responde por cerca de 40 KB comprimidos do bundle comum, e o LCP (3,3 s) depende de a API simulada responder.
-- **Relatórios do Lighthouse:** `lighthouse/reports/` está no `.gitignore` durante o desenvolvimento. Na entrega final, remover essa linha e versionar os relatórios.
+- **Lighthouse mobile:** as medianas atingem a meta (91 e 92), mas execuções isoladas variam entre 89 e 92. A causa e a análise estão no `ARCHITECTURE.md`.
 - **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe, o carrinho ou o pagamento.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.

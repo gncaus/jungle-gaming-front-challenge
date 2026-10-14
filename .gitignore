@@ -5,7 +5,6 @@ dist
 !.env.example
 .vercel
 .tanstack
-lighthouse/reports
 playwright-report
 test-results
 *.tsbuildinfo
