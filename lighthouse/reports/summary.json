@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T03:29:06.337Z",
+  "generatedAt": "2026-10-14T18:51:00.626Z",
   "runsPerTarget": 3,
   "targets": {
     "performance": 90,
@@ -10,7 +10,7 @@
   "environment": {
     "lighthouse": "13.5.0",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
-    "benchmarkIndex": 1799.5,
+    "benchmarkIndex": 1793,
     "node": "v24.13.0",
     "os": "Windows_NT 10.0.19045 (x64)",
     "cpu": "Intel(R) Xeon(R) CPU E5-2666 v3 @ 2.90GHz",
@@ -21,15 +21,15 @@
       "page": "inicio",
       "profile": "mobile",
       "scores": {
-        "performance": 91,
+        "performance": 90,
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100
       },
       "metrics": {
-        "LCP": 3241.93115,
+        "LCP": 3317.2009500000004,
         "CLS": 0,
-        "TBT": 162.5
+        "TBT": 165.5
       }
     },
     {
@@ -42,7 +42,7 @@
         "seo": 100
       },
       "metrics": {
-        "LCP": 745.3047999999999,
+        "LCP": 733.1122,
         "CLS": 0.0001283597511239089,
         "TBT": 0
       }
@@ -51,15 +51,15 @@
       "page": "detalhe",
       "profile": "mobile",
       "scores": {
-        "performance": 92,
+        "performance": 91,
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100
       },
       "metrics": {
-        "LCP": 3283.8091999999997,
+        "LCP": 3376.4370499999995,
         "CLS": 0,
-        "TBT": 104
+        "TBT": 90.50000000000023
       }
     },
     {
@@ -72,7 +72,7 @@
         "seo": 100
       },
       "metrics": {
-        "LCP": 772.0988500000001,
+        "LCP": 753.75405,
         "CLS": 0,
         "TBT": 0
       }

@@ -328,11 +328,12 @@ O layout é escuro e não há tema claro.
 
 - O estilo de cor *Secondary* do Figma (`#B39463`) chama-se `brand-secondary` no código, porque `secondary` já é um papel do shadcn/ui.
 - **Contagens dos filtros:** o layout mostra números ilustrativos (33, 12, 65…). A aplicação mostra a contagem real de cada coleção e rede.
-- **Linha de resultado:** acima da grade há a linha "36 NFTs encontrados", que não está no layout. Ela dá retorno, inclusive a leitores de tela, sobre o efeito de cada filtro.
+- **Linha de resultado:** a partir de 768 px, acima da grade, há a linha "36 NFTs encontrados", que não está no layout. Ela dá retorno sobre o efeito de cada filtro. No mobile, como no frame, ela não aparece, mas continua sendo lida por leitores de tela.
 - **Filtro selecionado:** além da cor, o item marcado ganha negrito e um ícone de confirmação, para o estado não depender só de cor.
 - **Indicadores do carrossel:** têm área de toque de 24 px, maior que os pontos de 8 px do layout, para atender ao tamanho mínimo de alvo.
 - **Itens fora do escopo do enunciado:** "Criadores" e "Aprenda" aparecem no menu, desabilitados e anunciados como "em breve". Os artigos do Diário da Cunhagem trazem "Artigo disponível em breve" no lugar do link "Ler mais". O formulário de novidades avisa que a inscrição não está disponível, em vez de simular sucesso. No rodapé, só as coleções são links; o restante é texto.
-- **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas.
+- **Mobile:** o frame mobile da página inicial mostra só a primeira tela. O restante da página, e a faixa de 768 px, seguem o desktop reorganizado em menos colunas. Como no frame, o mobile não mostra "Ordenar por" acima da grade: a ordenação fica no painel de filtros.
+- **Busca no cabeçalho:** o layout não desenha a busca aberta. Ao abrir, o campo ocupa o lugar do menu, para não cobrir os itens dele, e o menu volta ao fechar.
 - **Tela de carregamento:** o `index.html` traz a marca e "Carregando o marketplace…", exibidos até a aplicação iniciar. Não está no layout.
 - **Cards no mobile:** o nome reserva duas linhas, para a grade ter a mesma altura com skeletons e com dados.
 - **Ações no card:** o coração fica sempre visível no canto do card e, em telas largas, o botão de carrinho logo abaixo (adiciona uma unidade da edição padrão). No layout desktop eles aparecem ao passar o mouse, junto de um zoom, o que os esconderia de quem usa teclado ou toque. O zoom ficou de fora.
@@ -341,16 +342,17 @@ O layout é escuro e não há tema claro.
   - Edição esgotada aparece riscada e desabilitada. A quantidade é limitada pelo estoque e pelo limite por pedido, com a explicação logo abaixo.
   - No layout, os rótulos "Contrato" e "Direitos autorais" estão trocados em relação aos textos. A aplicação os mostra na ordem coerente.
   - A aba de avaliações mostra a nota e a contagem, que é o que a API tem; não há lista de comentários.
-  - O ícone de zoom da galeria e "Compartilhar este NFT" ficaram de fora, por serem ações fora do escopo.
+  - O ícone de zoom da galeria ficou de fora. "Compartilhar este NFT" abre o compartilhamento real do LinkedIn, do e-mail e do Twitter com o endereço da página.
   - No mobile há miniaturas abaixo da imagem, que o frame não mostra, para a galeria funcionar.
-  - No mobile, "Comprar NFT" e o botão de carrinho ficam no fim das opções de compra, no fluxo da página. No frame eles ficam em uma barra fixa, que disputaria o lugar com a navegação inferior.
+  - No mobile, como no frame, quantidade, preço, "Comprar NFT" e o carrinho ficam em uma barra fixa na base da tela. O título "Sobre este NFT" só existe para leitores de tela no mobile, como no frame.
+- **Diálogo de login e cadastro:** no desktop, a página por trás não escurece, como no layout; no mobile ele ocupa a tela toda.
 - **Login e cadastro:** "Continuar com Google", "Continuar com Facebook" e "Esqueceu a senha?" aparecem como no layout e respondem com um aviso de indisponível.
 - **Com sessão:** o botão "Entrar" do cabeçalho dá lugar ao primeiro nome do usuário, que leva ao perfil, e a um botão de sair. O layout não desenha esse estado.
-- **Navegação inferior do mobile:** Início, Favoritos, o botão central (leva ao catálogo), Carrinho e Perfil, como no frame. O item em destaque é o da seção aberta; com o login aberto, o destaque vai para a conta. Telas que não pertencem a nenhuma seção (detalhe, pedido) não destacam nenhum item.
+- **Navegação inferior do mobile:** Início, Favoritos, o botão central (leva ao catálogo), Carrinho e Perfil, como no frame. O item em destaque é o da seção aberta; com o login aberto, o destaque vai para a conta. Telas que não pertencem a nenhuma seção (detalhe, pedido) não destacam nenhum item. Ela aparece no início, nos favoritos, no perfil e no pedido; detalhe, carrinho e pagamento não a têm, como nos frames: essas telas têm o botão de voltar no topo e a ação principal no rodapé.
 - **Tela de favoritos** (`/favoritos`): não está no layout. Existe para o coração da barra ter destino; no desktop, chega-se a ela por "Lista de interesse", na navegação do perfil. Usa os cards do catálogo, e desfavoritar tira o card da tela na hora.
 - **Perfil e carteiras:**
   - O layout tem um único botão "Salvar" para os dados e a senha. A aplicação tem dois formulários, cada um com seu botão, para que um erro na senha não se confunda com o salvamento dos dados.
-  - O campo "Nome ENS" é um campo de texto com a indicação "sem o .eth"; o layout mostra um seletor de sufixo com uma única opção.
+  - O sufixo ".eth" do ENS aparece em uma caixa fixa ao lado do campo; no layout ela tem a forma de um seletor, mas só há uma opção.
   - "Atividade", "Ofertas", "Arquivos baixados" e "Suporte" aparecem na navegação lateral, desabilitados e anunciados como "em breve". "Lista de interesse" leva à tela de favoritos.
   - Sem frame mobile: a navegação lateral vira uma faixa com "Dados do perfil", "Carteiras" e "Sair", e os formulários passam a uma coluna.
   - Na tela de carteiras, a carteira salva aparece como resumo com "Editar"; o layout só desenha o formulário aberto.
@@ -391,10 +393,10 @@ A configuração versionada está em `lighthouse/config.mjs`. Os relatórios da 
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Início | mobile | 91 | 100 | 100 | 100 | 3,24 s | 0 | 163 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 0,75 s | 0 | 0 ms |
-| Detalhe | mobile | 92 | 100 | 100 | 100 | 3,28 s | 0 | 104 ms |
-| Detalhe | desktop | 100 | 100 | 100 | 100 | 0,77 s | 0 | 0 ms |
+| Início | mobile | 90 | 100 | 100 | 100 | 3,32 s | 0 | 166 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 0,73 s | 0 | 0 ms |
+| Detalhe | mobile | 91 | 100 | 100 | 100 | 3,38 s | 0 | 91 ms |
+| Detalhe | desktop | 100 | 100 | 100 | 100 | 0,75 s | 0 | 0 ms |
 
 Condições: Lighthouse 13.5.0 com os perfis padrão (mobile com throttling simulado de rede e CPU 4×; desktop com o perfil `desktop-config`), Chrome headless 155, Node 24, Windows 10, contra `vite preview` com o build de produção e o cenário padrão dos mocks. Os valores completos de ambiente estão em `lighthouse/reports/summary.md`.
 

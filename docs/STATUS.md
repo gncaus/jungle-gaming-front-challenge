@@ -117,7 +117,7 @@ Atualizado em 13/10/2026, ao fim da fatia 10.
 - Lighthouse mobile de 89–90 para 91 (início) e 92 (detalhe): primeira conexão do socket depois da primeira tela, pré-carregamento do chunk da rota aberta e cards fora da primeira linha montados em renderização interrompível. Desktop em 100; acessibilidade, boas práticas e SEO em 100 nas quatro medições.
 - Relatórios do Lighthouse versionados em `lighthouse/reports/`, com análise no `ARCHITECTURE.md`.
 - Os 12 cenários da seção 9 do enunciado conferidos contra a suíte (mapa abaixo).
-- Cabeçalho: nenhum item fica em destaque fora da página inicial.
+- Cabeçalho: "Mercado" fica em destaque no detalhe, no carrinho, no pagamento e no pedido, como no layout.
 - README com o passo a passo para reproduzir cada fluxo de falha.
 - 230 testes no total, 2 pulados no desktop por serem só do mobile.
 
@@ -138,13 +138,24 @@ Atualizado em 13/10/2026, ao fim da fatia 10.
 | 11 | Teclado, foco de diálogos e validação | `auth.spec.ts`, `catalog.spec.ts`, `detail.spec.ts`, `profile.spec.ts` |
 | 12 | Skeletons, falha e nova tentativa | `catalog.spec.ts`, `detail.spec.ts`, `cart.spec.ts` |
 
+**Revisão de fidelidade ao Figma**
+
+- Comparação tela a tela com os frames, nas mesmas larguras, e com as medidas do Figma (conteúdo de 1200 px, margem mobile de 24 px, banners de 586 × 250, cards do Diário de 268 px, destaque mobile de 366 × 190).
+- Mobile: barra inferior só onde o frame a tem; compra do detalhe em barra fixa no rodapé; ordenação dentro do painel de filtros; destaque compacto com a segunda arte sobreposta; voltar no pagamento.
+- Detalhe: cores dos atributos, espaçamento e "Compartilhar este NFT" com links reais.
+- Busca do cabeçalho aberta no lugar do menu, sem cobrir "Aprenda".
+- Carrinho, recibo, perfil, carteiras, filtros e rodapé ajustados ao layout (lista abaixo no `ARCHITECTURE.md`).
+- Lighthouse refeito: início mobile 90, detalhe mobile 91, desktop 100.
+
 ## Em andamento
 
 Nada.
 
 ## Próximo passo
 
-Entrega: conferir o checkout limpo e o deploy final.
+Entrega: enviar o repositório e a URL publicada.
+
+O checkout limpo e o deploy final já foram conferidos.
 
 ## Decisões
 
@@ -185,6 +196,6 @@ Entrega: conferir o checkout limpo e o deploy final.
 
 ## Pendências
 
-- **Lighthouse mobile:** as medianas atingem a meta (91 e 92), mas execuções isoladas variam entre 89 e 92. A causa e a análise estão no `ARCHITECTURE.md`.
+- **Lighthouse mobile:** as medianas atingem a meta (90 e 91), mas execuções isoladas variam entre 89 e 92. A causa e a análise estão no `ARCHITECTURE.md`.
 - **Baseline visual:** regenerar ao fim de cada fatia que mudar a página inicial, o detalhe, o carrinho ou o pagamento.
 - **Login social** (Google e Facebook no layout): fora do escopo; os botões não podem aparentar sucesso.
