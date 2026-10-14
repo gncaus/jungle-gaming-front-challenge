@@ -18,7 +18,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay data-slot="dialog-overlay" className="overlay-fade fixed inset-0 z-50 bg-black/60" />
+      <DialogPrimitive.Overlay data-slot="dialog-overlay" className="overlay-fade fixed inset-0 z-50 bg-black/60 md:bg-transparent" />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

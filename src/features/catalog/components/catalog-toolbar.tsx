@@ -25,7 +25,7 @@ interface CatalogToolbarProps {
 export function CatalogToolbar({ search, onChange }: CatalogToolbarProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <nav aria-label="Seleções do catálogo" className="-mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
+      <nav aria-label="Seleções do catálogo" className="-mx-6 overflow-x-auto px-6 md:mx-0 md:px-0">
         <ul className="flex gap-5 text-[15px] font-bold whitespace-nowrap">
           {nftTabs.map((tab) => (
             <li key={tab}>
@@ -46,26 +46,34 @@ export function CatalogToolbar({ search, onChange }: CatalogToolbarProps) {
         </ul>
       </nav>
 
-      <label className="flex items-center gap-1 text-[15px]">
-        <span>Ordenar por:</span>
-        <span className="relative">
-          <select
-            value={search.sort}
-            onChange={(event) => onChange({ sort: event.target.value as CatalogSearch['sort'] })}
-            className="bg-background cursor-pointer appearance-none rounded-sm py-1 pr-6 pl-1"
-          >
-            {nftSorts.map((sort) => (
-              <option key={sort} value={sort}>
-                {sortLabels[sort]}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute top-1/2 right-1 size-4 -translate-y-1/2"
-            aria-hidden="true"
-          />
-        </span>
-      </label>
+      {/* No mobile, como no layout, a ordenação fica no painel de filtros. */}
+      <SortSelect search={search} onChange={onChange} className="hidden md:flex" />
     </div>
+  )
+}
+
+/** "Ordenar por:", com as opções de ordenação do catálogo. */
+export function SortSelect({ search, onChange, className }: CatalogToolbarProps & { className?: string }) {
+  return (
+    <label className={cn('flex items-center gap-1 text-[15px]', className)}>
+      <span>Ordenar por:</span>
+      <span className="relative">
+        <select
+          value={search.sort}
+          onChange={(event) => onChange({ sort: event.target.value as CatalogSearch['sort'] })}
+          className="bg-background cursor-pointer appearance-none rounded-sm py-1 pr-6 pl-1"
+        >
+          {nftSorts.map((sort) => (
+            <option key={sort} value={sort}>
+              {sortLabels[sort]}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute top-1/2 right-1 size-4 -translate-y-1/2"
+          aria-hidden="true"
+        />
+      </span>
+    </label>
   )
 }

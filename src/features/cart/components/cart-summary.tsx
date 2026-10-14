@@ -63,7 +63,7 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
             placeholder="Digite o código promocional..."
             autoComplete="off"
             maxLength={40}
-            className="border-primary bg-background placeholder:text-brand-secondary h-12 min-w-0 flex-1 rounded-l-full border border-r-0 px-4 text-sm uppercase placeholder:normal-case md:h-10 md:rounded-l-sm md:px-2"
+            className="border-primary bg-background placeholder:text-brand-secondary h-12 min-w-0 flex-1 rounded-l-full border border-r-0 px-4 text-sm uppercase placeholder:normal-case md:h-10 md:rounded-l-sm md:px-2 md:text-xs"
           />
           <Button
             type="submit"

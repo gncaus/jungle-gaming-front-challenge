@@ -101,8 +101,9 @@
 @utility page-container {
   margin-inline: auto;
   width: 100%;
-  max-width: 77.5rem;
-  padding-inline: 1.25rem;
+  /* 1200 px de conteúdo com 24 px de margem, como nos frames. */
+  max-width: 78rem;
+  padding-inline: 1.5rem;
 }
 
 /*

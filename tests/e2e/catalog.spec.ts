@@ -27,7 +27,10 @@ test('busca, filtros combinados e ordenação vão para a URL e sobrevivem a ref
   await closeFilters(page, isMobile)
   await expectResults(page, 2)
 
-  await page.getByLabel('Ordenar por:').selectOption({ label: 'Menor preço' })
+  // No mobile a ordenação fica no painel de filtros.
+  filters = await openFilters(page, isMobile)
+  await filters.getByLabel('Ordenar por:').selectOption({ label: 'Menor preço' })
+  await closeFilters(page, isMobile)
   await expect(catalog(page).cardNames).toHaveText(['Golden Frequency #071', 'Golden Beat #207'])
 
   await searchFor(page, isMobile, 'beat')
@@ -43,8 +46,8 @@ test('busca, filtros combinados e ordenação vão para a URL e sobrevivem a ref
   await page.reload()
   await expectResults(page, 1)
   await expect(catalog(page).cardNames).toHaveText(['Golden Beat #207'])
-  await expect(page.getByLabel('Ordenar por:')).toHaveValue('price-asc')
   filters = await openFilters(page, isMobile)
+  await expect(filters.getByLabel('Ordenar por:')).toHaveValue('price-asc')
   await expect(filters.getByRole('checkbox', { name: /Música/ })).toBeChecked()
   await expect(filters.getByRole('checkbox', { name: /Solana/ })).toBeChecked()
 })

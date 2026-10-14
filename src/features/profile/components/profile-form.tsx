@@ -64,7 +64,9 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         {...form.register('email')}
       />
       <TextField
-        label="Nome ENS (sem o .eth)"
+        label="Nome ENS"
+        labelHint="(sem o .eth)"
+        adornment=".eth"
         required
         autoComplete="off"
         spellCheck={false}

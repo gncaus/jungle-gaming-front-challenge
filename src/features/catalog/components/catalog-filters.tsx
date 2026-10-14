@@ -55,7 +55,7 @@ function OptionList({ legend, name, options, selected, onToggle, strongCount = f
                   {option.name}
                 </span>
                 {checked && <Check className="text-primary size-4" aria-hidden="true" />}
-                <span className={cn(strongCount ? 'text-foreground font-bold' : 'text-text-secondary')}>
+                <span className={cn(checked ? 'text-primary' : 'text-text-secondary', strongCount && 'font-bold')}>
                   ({option.count})
                 </span>
               </label>

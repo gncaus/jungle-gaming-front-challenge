@@ -33,6 +33,42 @@ function availabilityMessage(edition: NftEdition, chosen: number): string | null
   return null
 }
 
+interface MobilePurchaseBarProps {
+  nft: NftDetail
+  edition: NftEdition
+  quantity: number
+  onQuantityChange: (quantity: number) => void
+  actions: ReactNode
+}
+
+/**
+ * Rodapé fixo do detalhe no mobile, como no layout: quantidade e preço da edição, e abaixo
+ * "Comprar NFT" e o carrinho. Fica preso à base da tela enquanto o detalhe está visível.
+ */
+export function MobilePurchaseBar({ nft, edition, quantity, onQuantityChange, actions }: MobilePurchaseBarProps) {
+  const max = maxQuantityOf(edition)
+  return (
+    <div className="bg-background sticky bottom-0 z-30 -mx-6 mt-10 flex flex-col gap-4 rounded-t-[28px] px-6 pt-5 pb-6 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:hidden">
+      <div className="flex items-center gap-3">
+        <span className="text-sm" aria-hidden="true">
+          Qtd.
+        </span>
+        <QuantityStepper
+          value={Math.max(1, Math.min(quantity, max))}
+          max={max}
+          onChange={onQuantityChange}
+          label={`Quantidade de ${nft.name}`}
+        />
+        <p className="text-text-accent ml-auto text-[22px] font-bold" data-testid="edition-price">
+          <span className="sr-only">Preço da edição {edition.label}: </span>
+          {formatEth(edition.price)}
+        </p>
+      </div>
+      <div className="flex items-center gap-3">{actions}</div>
+    </div>
+  )
+}
+
 /** Escolha de edição e quantidade do detalhe. O preço exibido é o da edição selecionada. */
 export function PurchaseOptions({
   nft,
@@ -53,21 +89,18 @@ export function PurchaseOptions({
         onSelect={onEditionChange}
         name={`edition-${nft.id}`}
       />
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {/* No mobile, quantidade, preço e compra ficam na barra fixa do rodapé (MobilePurchaseBar). */}
+      <div className="hidden flex-wrap items-center gap-x-6 gap-y-3 md:flex">
         <QuantityStepper
           value={Math.max(1, Math.min(quantity, max))}
           max={max}
           onChange={onQuantityChange}
           label={`Quantidade de ${nft.name}`}
         />
-        {/* No mobile o preço fica ao lado da quantidade; em telas largas, sob o título. */}
-        <p className="text-text-accent ml-auto text-[22px] font-bold md:hidden" data-testid="edition-price">
-          <span className="sr-only">Preço da edição {edition.label}: </span>
-          {formatEth(edition.price)}
-        </p>
-        {actions && <div className="ml-auto hidden gap-2 md:flex">{actions}</div>}
+        {actions && <div className="ml-auto flex gap-2">{actions}</div>}
       </div>
-      <p role="status" className="text-text-accent min-h-5 text-sm">
+      {/* Vazio, o aviso não ocupa espaço (anula o espaçamento da coluna), como no layout. */}
+      <p role="status" className="text-text-accent -mt-4 text-sm not-empty:mt-0">
         {message}
       </p>
     </div>

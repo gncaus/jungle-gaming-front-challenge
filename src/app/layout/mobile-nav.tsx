@@ -1,6 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { Heart, House, ScanLine, User } from 'lucide-react'
 import { useSession } from '@/features/auth/hooks/use-session'
+import { hasMobileNav } from '@/app/layout/mobile-nav-visibility'
 import { CartLink } from '@/features/cart/components/cart-link'
 import { cn } from '@/shared/lib/utils'
 
@@ -28,9 +29,13 @@ export function MobileNav() {
   // Lido da URL atual, e não do `useSearch`: depois do redirecionamento que segue o login,
   // o `useSearch` às vezes continuava devolvendo o parâmetro já removido da URL.
   const loginOpen = useLocation({ select: (location) => location.search.auth !== undefined })
+  // Em `/#catalogo` quem fica em destaque é o botão central, que leva ao catálogo.
+  const onCatalog = useLocation({ select: (location) => location.hash === 'catalogo' })
   const session = useSession()
   // Com o login aberto, o destaque vai para a conta, que é o que o usuário está fazendo.
-  const current = loginOpen ? 'account' : sectionOf(pathname)
+  const current = loginOpen ? 'account' : onCatalog ? null : sectionOf(pathname)
+
+  if (!hasMobileNav(pathname)) return null
 
   const tone = (section: Section) => (current === section ? 'text-text-accent' : 'text-brand-secondary')
   const currentPage = (section: Section) => (current === section ? 'page' : undefined)
@@ -50,7 +55,14 @@ export function MobileNav() {
         aria-hidden="true"
         className="bg-card absolute inset-0 -z-10 rounded-t-[40px] [mask-image:radial-gradient(circle_42px_at_50%_0,transparent_41px,black_42px)]"
       />
-      <Link to="/" aria-label="Início" aria-current={currentPage('home')} className={cn(itemClass, tone('home'))}>
+      <Link
+        to="/"
+        // Com o hash, "Início" deixa de ser a página atual em `/#catalogo` (lá é o botão central).
+        activeOptions={{ includeHash: true }}
+        aria-label="Início"
+        aria-current={currentPage('home')}
+        className={cn(itemClass, tone('home'))}
+      >
         <House className={iconClass} aria-hidden="true" />
       </Link>
 

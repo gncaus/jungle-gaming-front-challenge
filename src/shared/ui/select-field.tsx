@@ -16,11 +16,10 @@ export function SelectField({ label, placeholder, options, error, className, ...
 
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-2 block text-sm">
+      <label htmlFor={id} className="mb-2 block text-sm md:text-[15px]">
         {label}
         {props.required && (
           <span className="text-text-coral" aria-hidden="true">
-            {' '}
             *
           </span>
         )}

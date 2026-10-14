@@ -10,6 +10,9 @@ const navLinkClass =
   'inline-block border-b-2 border-transparent pb-[18px] text-base leading-6 transition-colors hover:text-primary-light'
 const activeNavClass = 'border-primary text-text-accent font-bold'
 
+/** Telas que pertencem ao "Mercado" no menu. */
+const marketPaths = ['/nft/', '/carrinho', '/pagamento', '/pedido/']
+
 /** Seções do menu que existem no layout, mas estão fora do escopo da entrega. */
 const upcomingSections = ['Criadores', 'Aprenda']
 
@@ -17,7 +20,10 @@ const upcomingSections = ['Criadores', 'Aprenda']
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
-  const isHome = useLocation({ select: (location) => location.pathname === '/' })
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const isHome = pathname === '/'
+  // Como no layout: "Mercado" fica em destaque nas telas da jornada de compra.
+  const isMarket = marketPaths.some((prefix) => pathname.startsWith(prefix))
   const currentQuery = useSearch({ strict: false, select: (search) => search.q ?? '' })
 
   function closeSearch() {
@@ -27,55 +33,62 @@ export function SiteHeader() {
 
   return (
     <header className="page-container hidden md:block">
-      <div className="grid h-[68px] grid-cols-[1fr_auto_1fr] items-start border-b pt-6">
+      <div
+        className="grid h-[68px] grid-cols-[1fr_auto_1fr] items-start border-b pt-6"
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && searchOpen) closeSearch()
+        }}
+      >
         <Link to="/" className="mt-[7px] justify-self-start text-sm font-bold tracking-widest" aria-label="Kurio, página inicial">
           KURIO
         </Link>
 
-        <nav aria-label="Principal">
-          <ul className="flex gap-10">
-            <li>
-              <Link
-                to="/"
-                aria-current={isHome ? 'page' : undefined}
-                className={cn(navLinkClass, isHome && activeNavClass)}
-              >
-                Início
-              </Link>
-            </li>
-            <li>
-              {/* Leva ao catálogo, que fica na página inicial; fora dela nenhum item fica em destaque. */}
-              <Link to="/" hash="catalogo" activeOptions={{ includeHash: true }} className={navLinkClass}>
-                Mercado
-              </Link>
-            </li>
-            {upcomingSections.map((section) => (
-              <li key={section}>
-                <span aria-disabled="true" className={cn(navLinkClass, 'text-brand-secondary cursor-default hover:text-brand-secondary')}>
-                  {section}
-                  <span className="sr-only"> (em breve)</span>
-                </span>
+        {/* A busca aberta ocupa o lugar do menu, para não cobrir os itens dele. */}
+        {searchOpen ? (
+          <SearchForm
+            current={currentQuery}
+            placeholder="Buscar NFTs"
+            inputId="header-search"
+            autoFocus
+            className="-mt-[10px] w-[min(420px,40vw)]"
+            onSubmitted={() => setSearchOpen(false)}
+          />
+        ) : (
+          <nav aria-label="Principal">
+            <ul className="flex gap-6 lg:gap-10">
+              <li>
+                <Link
+                  to="/"
+                  aria-current={isHome ? 'page' : undefined}
+                  className={cn(navLinkClass, isHome && activeNavClass)}
+                >
+                  Início
+                </Link>
               </li>
-            ))}
-          </ul>
-        </nav>
+              <li>
+                <Link
+                  to="/"
+                  hash="catalogo"
+                  activeOptions={{ includeHash: true }}
+                  aria-current={isMarket ? 'page' : undefined}
+                  className={cn(navLinkClass, isMarket && activeNavClass)}
+                >
+                  Mercado
+                </Link>
+              </li>
+              {upcomingSections.map((section) => (
+                <li key={section}>
+                  <span aria-disabled="true" className={cn(navLinkClass, 'text-brand-secondary cursor-default hover:text-brand-secondary')}>
+                    {section}
+                    <span className="sr-only"> (em breve)</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
-        <div
-          className="-mt-3 flex items-center gap-3 justify-self-end"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape' && searchOpen) closeSearch()
-          }}
-        >
-          {searchOpen && (
-            <SearchForm
-              current={currentQuery}
-              placeholder="Buscar NFTs"
-              inputId="header-search"
-              autoFocus
-              className="w-44 lg:w-64"
-              onSubmitted={() => setSearchOpen(false)}
-            />
-          )}
+        <div className="-mt-3 flex items-center gap-3 justify-self-end">
           <button
             ref={toggleRef}
             type="button"

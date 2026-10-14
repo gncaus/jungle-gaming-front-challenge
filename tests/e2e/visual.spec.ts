@@ -32,7 +32,7 @@ test('carrinho', async ({ page }) => {
   await seedCart(page, figmaCart)
   await page.reload()
   await expectTotals(page, { subtotal: '26.83', total: '26.846' })
-  await expect(page.getByRole('region', { name: 'Colecionadores também viram' }).getByRole('article')).toHaveCount(4)
+  await expect(page.getByRole('region', { name: 'Colecionadores também viram' }).getByRole('article')).toHaveCount(5)
   await settlePage(page)
 
   await expect(page).toHaveScreenshot('carrinho.png', { fullPage: true })

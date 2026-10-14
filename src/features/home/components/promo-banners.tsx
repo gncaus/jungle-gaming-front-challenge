@@ -31,9 +31,9 @@ const banners: Banner[] = [
 
 export function PromoBanners() {
   return (
-    <section aria-label="Seleções em destaque" className="grid gap-6 md:grid-cols-2 xl:gap-[30px]">
+    <section aria-label="Seleções em destaque" className="grid gap-6 md:grid-cols-2 xl:gap-7">
       {banners.map((banner) => (
-        <article key={banner.title} className="bg-card flex overflow-hidden rounded-lg xl:min-h-[250px]">
+        <article key={banner.title} className="bg-card flex overflow-hidden rounded-lg xl:h-[250px]">
           <img
             // `loading` antes de `src`: ver o comentário em nft-image.tsx.
             loading="lazy"
@@ -44,9 +44,9 @@ export function PromoBanners() {
             height={640}
             className="w-[42%] shrink-0 rounded-2xl object-cover xl:w-[287px]"
           />
-          <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-3 p-4 text-right xl:py-6 xl:pr-[30px] xl:pl-2">
-            <h2 className="text-base font-bold xl:text-lg">{banner.title}</h2>
-            <p className="text-text-secondary text-sm leading-6">{banner.description}</p>
+          <div className="flex min-w-0 flex-1 flex-col items-end justify-center gap-3 p-4 text-right xl:gap-2 xl:py-6 xl:pr-6 xl:pl-2">
+            <h2 className="text-base font-bold xl:text-lg xl:leading-6">{banner.title}</h2>
+            <p className="text-text-secondary text-sm leading-6 xl:text-[13px] xl:leading-[22px]">{banner.description}</p>
             <Button asChild className="w-[140px]">
               <Link
                 to="/"

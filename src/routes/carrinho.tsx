@@ -60,7 +60,7 @@ function CartPage() {
       <h1 className="sr-only hidden md:block">Carrinho de NFTs</h1>
 
       {isPending && (
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_332px] md:gap-[86px]" aria-busy="true">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_332px] md:gap-[86px]" aria-busy="true">
           <div className="flex flex-col gap-3 md:pt-[42px]" data-testid="cart-skeleton">
             <p role="status" className="sr-only">
               Carregando carrinho…
@@ -98,7 +98,7 @@ function CartPage() {
       )}
 
       {cart && cart.items.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
           <section aria-labelledby="cart-items-title">
             <h2 id="cart-items-title" className="sr-only">
               Itens do carrinho
@@ -144,7 +144,7 @@ function CartPage() {
         <div className="mt-16 md:mt-[100px]">
           <NftShelf
             title="Colecionadores também viram"
-            filter={{ tab: 'trending' }}
+            filter={{}}
             excludeIds={cart.items.map((item) => item.nftId)}
           />
         </div>

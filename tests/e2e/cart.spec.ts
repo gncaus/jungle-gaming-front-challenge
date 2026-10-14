@@ -222,7 +222,12 @@ test('adicionar sem sair da página: pelo card em telas largas, pelo detalhe no 
   await expectCartCount(page, 1)
   expect(page.url()).toBe(url)
 
-  await page.getByRole('link', { name: 'Carrinho, 1 item' }).filter({ visible: true }).click()
+  // No mobile o detalhe não tem a barra inferior com o atalho do carrinho.
+  if (isMobile) {
+    await page.goto('/carrinho')
+  } else {
+    await page.getByRole('link', { name: 'Carrinho, 1 item' }).filter({ visible: true }).click()
+  }
   await expect(cartItem(page, 'Sage Nomad #009')).toBeVisible()
 })
 

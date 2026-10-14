@@ -160,9 +160,12 @@ test('barra inferior do mobile destaca a seção aberta', async ({ page, isMobil
 
   await expect(current).toHaveAccessibleName('Início')
 
+  // Como nos frames, o carrinho tem o botão de voltar no topo e não mostra a barra.
   await nav.getByRole('link', { name: /^Carrinho/ }).click()
   await expect(page).toHaveURL(/\/carrinho$/)
-  await expect(current).toHaveAccessibleName(/^Carrinho/)
+  await expect(nav).toBeHidden()
+  await page.getByRole('link', { name: 'Continuar explorando' }).first().click()
+  await expect(current).toHaveAccessibleName('Explorar o catálogo')
 
   // Favoritos exige sessão: o login abre e, depois dele, a tela pedida aparece em destaque.
   await nav.getByRole('link', { name: 'Favoritos' }).click()

@@ -47,7 +47,7 @@ export function Journal() {
       <p className="text-text-secondary mt-3 text-center text-sm">
         Histórias, guias e insights para colecionadores sobre o universo da propriedade digital.
       </p>
-      <ul className="mt-9 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+      <ul className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6 xl:grid-cols-[repeat(4,268px)]">
         {articles.map((article) => (
           <li key={article.title} className="bg-card overflow-hidden rounded-lg">
             <img

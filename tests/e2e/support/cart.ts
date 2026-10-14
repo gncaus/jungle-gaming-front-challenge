@@ -42,8 +42,28 @@ export async function expectTotals(
   await expect(totals.locator('div', { hasText: 'Total' }).last()).toContainText(`${values.total} ETH`)
 }
 
-/** O atalho do carrinho visível (cabeçalho ou navegação inferior) diz quantos itens há. */
+/** Quantos itens a API diz que há no carrinho de quem está nesta página. */
+async function cartItemCount(page: Page): Promise<number> {
+  const identity = await page.evaluate(() => ({
+    token: localStorage.getItem('kurio.session.token') ?? undefined,
+    guestId: localStorage.getItem('kurio.guest.id') ?? undefined,
+  }))
+  const response = await api<{ itemCount: number }>(page, 'GET', '/cart', identity)
+  return response.body.itemCount
+}
+
+/**
+ * O atalho do carrinho visível (cabeçalho ou navegação inferior) diz quantos itens há.
+ * No mobile, detalhe, carrinho e pagamento não têm a navegação inferior, como nos frames;
+ * ali a contagem é conferida na API.
+ */
 export async function expectCartCount(page: Page, count: number): Promise<void> {
+  const narrow = (page.viewportSize()?.width ?? 1440) < 768
+  const { pathname } = new URL(page.url())
+  if (narrow && ['/nft/', '/carrinho', '/pagamento'].some((prefix) => pathname.startsWith(prefix))) {
+    await expect.poll(() => cartItemCount(page)).toBe(count)
+    return
+  }
   const name = count === 0 ? 'Carrinho, vazio' : `Carrinho, ${count} ${count === 1 ? 'item' : 'itens'}`
   await expect(page.getByRole('link', { name }).filter({ visible: true })).toBeVisible()
 }

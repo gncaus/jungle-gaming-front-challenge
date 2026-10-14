@@ -1,15 +1,14 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Download, Heart, LifeBuoy, LogOut, ShoppingCart, Tag, User, Wallet } from 'lucide-react'
+import { Download, Heart, LifeBuoy, LogOut, MapPin, ShoppingCart, Tag, User } from 'lucide-react'
 import { useLogout } from '@/features/auth/hooks/use-session'
 
 const itemClass =
-  'flex h-11 items-center gap-3 border-b-2 border-transparent px-3 text-sm whitespace-nowrap md:h-[45px] md:border-b-0 md:border-l-[6px] md:px-2.5 lg:text-base [&_svg]:shrink-0'
+  'flex h-11 items-center gap-3 border-b-2 border-transparent px-3 text-sm whitespace-nowrap md:h-[45px] md:border-b-0 md:border-l-[6px] md:px-2.5 [&_svg]:shrink-0'
 const linkClass = `${itemClass} text-text-accent hover:text-primary-light transition-colors`
-const activeProps = { className: 'border-primary! font-bold', 'aria-current': 'page' } as const
+const activeProps = { className: 'border-primary!', 'aria-current': 'page' } as const
 
 /** Seções do layout que estão fora do escopo da entrega. */
 const upcomingSections = [
-  { label: 'Atividade', icon: ShoppingCart },
   { label: 'Ofertas', icon: Tag },
   { label: 'Arquivos baixados', icon: Download },
   { label: 'Suporte', icon: LifeBuoy },
@@ -36,9 +35,16 @@ export function ProfileNav() {
           </li>
           <li>
             <Link to="/perfil/carteiras" activeProps={activeProps} className={linkClass}>
-              <Wallet className="hidden size-5 md:block" aria-hidden="true" />
+              <MapPin className="hidden size-5 md:block" aria-hidden="true" />
               Carteiras
             </Link>
+          </li>
+          <li className="hidden md:block">
+            <span aria-disabled="true" className={`${itemClass} text-brand-secondary cursor-default`}>
+              <ShoppingCart className="size-5" aria-hidden="true" />
+              Atividade
+              <span className="sr-only"> (em breve)</span>
+            </span>
           </li>
           {/* No mobile, os favoritos estão na barra de navegação inferior. */}
           <li className="hidden md:block">

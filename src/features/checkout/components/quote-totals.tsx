@@ -2,7 +2,7 @@ import type { Quote } from '@/features/checkout/schemas'
 import { formatEth } from '@/shared/lib/money'
 import { Skeleton } from '@/shared/ui/skeleton'
 
-const rowClass = 'flex items-baseline justify-between gap-4 text-base'
+const rowClass = 'flex items-baseline justify-between gap-4 text-sm md:text-[15px]'
 
 /** Subtotal, desconto, taxa de rede e total, exatamente como vieram da cotação. */
 export function QuoteTotals({ quote }: { quote: Quote }) {
@@ -13,7 +13,9 @@ export function QuoteTotals({ quote }: { quote: Quote }) {
         <dd className="text-lg">{formatEth(quote.subtotal)}</dd>
       </div>
       <div className={rowClass}>
-        <dt>{quote.coupon ? quote.coupon.description : 'Desconto do lançamento'}</dt>
+        <dt className={quote.coupon ? undefined : 'whitespace-nowrap'}>
+          {quote.coupon ? quote.coupon.description : 'Desconto do lançamento'}
+        </dt>
         <dd className="shrink-0 whitespace-nowrap">(-) {formatEth(quote.discount)}</dd>
       </div>
       <div className={rowClass}>

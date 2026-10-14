@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { z } from 'zod'
 import { useSession } from '@/features/auth/hooks/use-session'
@@ -177,7 +178,17 @@ function CheckoutPage() {
           <li aria-current="page">Pagamento</li>
         </ol>
       </nav>
-      <h1 className="py-4 text-center text-lg font-bold md:sr-only">Pagamento com carteira</h1>
+      <div className="relative flex items-center justify-center py-4 md:block md:p-0">
+        <Link
+          to="/carrinho"
+          search={{ cupom }}
+          aria-label="Voltar para o carrinho"
+          className="bg-card hover:text-primary-light absolute left-0 flex size-10 items-center justify-center rounded-full transition-colors md:hidden"
+        >
+          <ChevronLeft className="size-5" aria-hidden="true" />
+        </Link>
+        <h1 className="text-lg font-bold md:sr-only">Pagamento com carteira</h1>
+      </div>
 
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_340px] md:items-start xl:grid-cols-[minmax(0,1fr)_405px]">
         <div className="flex flex-col gap-6">

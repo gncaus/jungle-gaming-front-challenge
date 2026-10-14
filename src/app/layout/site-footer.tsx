@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
+import { hasMobileNav } from '@/app/layout/mobile-nav-visibility'
+import { cn } from '@/shared/lib/utils'
 import { NewsletterForm } from '@/app/layout/newsletter-form'
 import {
   FacebookIcon,
@@ -68,8 +70,11 @@ function TextColumn({ title, items }: { title: string; items: string[] }) {
 }
 
 export function SiteFooter() {
+  // No mobile, o rodapé reserva o espaço da barra de navegação inferior quando ela existe.
+  const withMobileNav = useLocation({ select: (location) => hasMobileNav(location.pathname) })
+
   return (
-    <footer className="page-container mt-20 pb-24 md:pb-6 xl:mt-[146px]">
+    <footer className={cn('page-container mt-20 md:pb-6 xl:mt-[146px]', withMobileNav ? 'pb-24' : 'pb-6')}>
       <div className="bg-card">
         <div className="grid gap-8 p-6 md:grid-cols-2 xl:grid-cols-[297px_266px_265px_1fr] xl:gap-0 xl:px-0 xl:pt-8 xl:pb-4">
           {pillars.map((pillar) => (
@@ -132,9 +137,9 @@ export function SiteFooter() {
               ))}
             </ul>
             <h3 className="mt-7 text-lg font-bold">Carteiras compatíveis</h3>
-            <ul className="border-border-soft bg-surface-dark text-text-accent mt-3 inline-flex flex-wrap gap-x-3 rounded-sm border px-2.5 py-1.5 text-[9px] font-bold tracking-wider uppercase">
+            <ul className="border-border-soft bg-surface-dark text-text-accent mt-3 inline-flex flex-wrap gap-x-2 rounded-sm border px-2 py-1.5 text-[8px] xl:flex-nowrap xl:whitespace-nowrap font-bold tracking-wider uppercase">
               {wallets.map((wallet, index) => (
-                <li key={wallet} className="flex gap-x-3">
+                <li key={wallet} className="flex gap-x-2">
                   {index > 0 && <span aria-hidden="true">·</span>}
                   {wallet}
                 </li>

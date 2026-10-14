@@ -35,7 +35,7 @@ export function NftGrid({ search, hasActiveFilters, onClearFilters }: NftGridPro
         <p role="status" className="sr-only">
           Carregando NFTs…
         </p>
-        <Skeleton className="mb-4 h-4 w-40" />
+        <Skeleton className="mb-4 h-4 w-40 max-md:hidden" />
         <div className={gridClass} data-testid="nft-grid-skeleton">
           {Array.from({ length: defaultPageSize }, (_, index) => (
             <NftCardSkeleton key={index} />
@@ -75,7 +75,8 @@ export function NftGrid({ search, hasActiveFilters, onClearFilters }: NftGridPro
 
   return (
     <div>
-      <p role="status" className="text-muted-foreground mb-4 text-xs leading-4">
+      {/* No mobile o layout não mostra a contagem; ela continua sendo anunciada. */}
+      <p role="status" className="text-muted-foreground mb-4 text-xs leading-4 max-md:sr-only">
         {data.totalItems === 1 ? '1 NFT encontrado' : `${data.totalItems} NFTs encontrados`}
         {isFetching && ' · atualizando…'}
       </p>

@@ -140,7 +140,9 @@ export function WalletForm({ slot, wallet, suggestions, onSaved }: WalletFormPro
         {...form.register('email')}
       />
       <TextField
-        label="Nome ENS (sem o .eth)"
+        label="Nome ENS"
+        labelHint="(sem o .eth)"
+        adornment=".eth"
         required
         autoComplete="off"
         spellCheck={false}

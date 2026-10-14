@@ -8,8 +8,8 @@ import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
 
-const artClass = 'size-[140px] shrink-0 rounded-2xl md:size-[320px] md:rounded-[28px] xl:size-[450px]'
-const artSizes = '(min-width: 1280px) 450px, (min-width: 768px) 320px, 140px'
+const artClass = 'size-[145px] shrink-0 rounded-2xl md:size-[320px] md:rounded-[28px] xl:size-[450px]'
+const artSizes = '(min-width: 1280px) 450px, (min-width: 768px) 320px, 145px'
 
 /**
  * Topo da página inicial. O texto é fixo (e mais curto no mobile, como no layout);
@@ -20,20 +20,25 @@ export function Hero() {
   const { data, isPending } = useQuery(nftHighlightsQueryOptions)
   const slides = data?.hero ?? []
   const nft = slides[active] ?? slides[0]
+  // No mobile, o layout mostra a próxima arte pequena, sobreposta à principal.
+  const next = slides.length > 1 ? slides[(active + 1) % slides.length] : undefined
 
   return (
     <section
       aria-roledescription="carrossel"
       aria-label="NFTs em destaque"
-      className="bg-surface-raised md:bg-background relative flex items-start gap-3 rounded-[28px] p-4 pb-9 md:items-center md:rounded-none md:p-0 md:py-8 md:pl-10 xl:items-start xl:gap-0 xl:pt-[33px] xl:pb-0"
+      className="bg-surface-raised md:bg-background relative flex min-h-[190px] items-start gap-3 overflow-hidden rounded-[28px] p-4 pb-7 md:min-h-0 md:items-center md:overflow-visible md:rounded-none md:p-0 md:py-8 md:pl-10 xl:items-start xl:gap-0 xl:pt-[33px] xl:pb-0"
     >
-      <div className="min-w-0 flex-1 xl:pt-10">
-        <p className="text-[13px] tracking-widest md:text-sm">Bem-vindo à Kurio</p>
-        <h1 className="mt-2 text-lg leading-8 font-medium uppercase md:mt-3 md:text-[32px] md:leading-[52px] md:font-bold xl:mt-2 xl:max-w-[520px] xl:text-[43px] xl:leading-[70px]">
+      {/* Círculos decorativos do fundo, só no cartão do mobile. */}
+      <span aria-hidden="true" className="pointer-events-none absolute -top-16 left-[22%] size-[300px] rounded-full bg-white/[0.04] md:hidden" />
+      <span aria-hidden="true" className="pointer-events-none absolute top-24 -left-10 size-[220px] rounded-full bg-white/[0.03] md:hidden" />
+      <div className="relative min-w-0 flex-1 xl:pt-10">
+        <p className="text-xs tracking-wide md:text-sm md:tracking-widest">Bem-vindo à Kurio</p>
+        <h1 className="mt-1.5 text-base leading-[26px] font-medium uppercase md:mt-3 md:text-[32px] md:leading-[52px] md:font-bold xl:mt-2 xl:max-w-[520px] xl:text-[43px] xl:leading-[70px]">
           <span className="md:hidden">Seja dono da cultura digital</span>
           <span className="hidden md:inline">Seja dono do futuro da arte digital</span>
         </h1>
-        <p className="text-text-secondary mt-1 text-sm leading-[22px] md:leading-6">
+        <p className="text-text-secondary mt-1 text-xs leading-[18px] md:text-sm md:leading-6">
           <span className="md:hidden">Descubra NFTs selecionados de criadores do mundo todo.</span>
           <span className="hidden md:inline">
             Descubra NFTs selecionados de criadores emergentes e consagrados. Colecione arte digital rara,
@@ -42,7 +47,7 @@ export function Hero() {
         </p>
         <a
           href="#catalogo"
-          className="text-text-accent hover:text-primary-light mt-1 inline-flex min-h-6 items-center gap-2 text-sm font-bold tracking-wide uppercase md:hidden"
+          className="text-text-accent hover:text-primary-light mt-0.5 inline-flex min-h-6 items-center gap-2 text-xs font-bold tracking-wide uppercase md:hidden"
         >
           Explorar <ArrowRight className="size-4" aria-hidden="true" />
         </a>
@@ -58,6 +63,15 @@ export function Hero() {
           <NftImage image={nft.image} sizes={artSizes} priority className="size-full" />
           <span className="sr-only">Ver {nft.name}</span>
         </Link>
+      )}
+
+      {next && (
+        <span
+          aria-hidden="true"
+          className="border-surface-raised absolute right-[118px] bottom-[24px] size-[60px] overflow-hidden rounded-xl border-2 md:hidden"
+        >
+          <NftImage image={next.image} sizes="60px" className="size-full" />
+        </span>
       )}
 
       {slides.length > 1 && (

@@ -8,8 +8,9 @@ import { AddToCartButton } from '@/features/cart/components/add-to-cart-button'
 import { NftGallery, NftGallerySkeleton } from '@/features/catalog/components/detail/nft-gallery'
 import { NftInfoTabs } from '@/features/catalog/components/detail/nft-info-tabs'
 import { NftRating } from '@/features/catalog/components/detail/nft-rating'
-import { PurchaseOptions } from '@/features/catalog/components/detail/purchase-options'
+import { MobilePurchaseBar, PurchaseOptions } from '@/features/catalog/components/detail/purchase-options'
 import { NftShelf } from '@/features/catalog/components/nft-shelf'
+import { ShareLinks } from '@/features/catalog/components/detail/share-links'
 import { nftDetailQueryOptions } from '@/features/catalog/hooks/queries'
 import type { NftDetail } from '@/features/catalog/schemas'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
@@ -124,7 +125,7 @@ function NftView({ nft }: { nft: NftDetail }) {
             <NftRating rating={nft.rating} />
           </div>
 
-          <h2 className="mt-3 text-sm font-bold md:mt-4">Sobre este NFT:</h2>
+          <h2 className="mt-3 text-sm font-bold max-md:sr-only md:mt-4">Sobre este NFT:</h2>
           <p className="text-text-secondary mt-1 text-sm leading-6">{nft.description}</p>
 
           <div className="mt-3">
@@ -143,17 +144,7 @@ function NftView({ nft }: { nft: NftDetail }) {
             />
           </div>
 
-          <div className="flex items-center gap-3 md:hidden">
-            <AddToCartButton
-              {...selection}
-              variant="buy"
-              label="Comprar NFT"
-              className="h-[60px] flex-1 rounded-full text-base normal-case"
-            />
-            <AddToCartButton {...selection} variant="icon" className="bg-card size-[60px]" />
-          </div>
-
-          <dl className="text-text-secondary mt-4 flex flex-col gap-2 text-[15px]">
+          <dl className="text-brand-secondary mt-4 flex flex-col gap-2 text-[15px]">
             <div className="flex gap-2">
               <dt>ID do token:</dt>
               <dd>{nft.tokenId}</dd>
@@ -165,7 +156,7 @@ function NftView({ nft }: { nft: NftDetail }) {
                   to="/"
                   search={{ collection: [nft.collection.id], page: 1 }}
                   hash="catalogo"
-                  className="hover:text-primary-light underline underline-offset-4 transition-colors"
+                  className="hover:text-primary-light underline-offset-4 transition-colors hover:underline"
                 >
                   {nft.collection.name}
                 </Link>
@@ -176,6 +167,7 @@ function NftView({ nft }: { nft: NftDetail }) {
               <dd>{nft.attributes.join(', ')}</dd>
             </div>
           </dl>
+          <ShareLinks nft={nft} />
         </div>
       </div>
 
@@ -185,6 +177,24 @@ function NftView({ nft }: { nft: NftDetail }) {
       <div className="mt-12 md:mt-[72px]">
         <NftShelf title="Mais desta coleção" filter={{ collection: [nft.collection.id] }} excludeIds={[nft.id]} />
       </div>
+
+      <MobilePurchaseBar
+        nft={nft}
+        edition={edition}
+        quantity={quantity}
+        onQuantityChange={(next) => setQuantity(Math.max(1, Math.min(next, maxQuantity)))}
+        actions={
+          <>
+            <AddToCartButton
+              {...selection}
+              variant="buy"
+              label="Comprar NFT"
+              className="h-[60px] flex-1 rounded-full text-base normal-case"
+            />
+            <AddToCartButton {...selection} variant="icon" className="bg-card size-[60px]" />
+          </>
+        }
+      />
     </article>
   )
 }

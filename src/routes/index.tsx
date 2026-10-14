@@ -52,7 +52,7 @@ function HomePage() {
 
   return (
     <div className="page-container">
-      <div className="flex gap-2 pt-10 pb-3 md:hidden">
+      <div className="flex gap-2 pt-10 pb-4 md:hidden">
         <SearchForm
           current={search.q}
           placeholder="Explorar coleções"
@@ -81,7 +81,7 @@ function HomePage() {
       <section
         id="catalogo"
         aria-labelledby="catalog-title"
-        className="mt-8 gap-12 md:mt-14 lg:grid lg:grid-cols-[310px_minmax(0,1fr)] xl:mt-24"
+        className="mt-6 gap-12 md:mt-14 lg:grid lg:grid-cols-[310px_minmax(0,1fr)] xl:mt-24"
       >
         <h2 id="catalog-title" className="sr-only">
           Catálogo de NFTs

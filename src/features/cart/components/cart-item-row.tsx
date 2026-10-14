@@ -45,7 +45,7 @@ export function CartItemRow({ item, notice }: CartItemRowProps) {
             <span className="sr-only">Ver {item.name}</span>
           </Link>
           <div className="min-w-0 py-2 md:py-0">
-            <h3 className="text-base leading-5 font-bold md:truncate">{item.name}</h3>
+            <h3 className="text-sm leading-5 font-bold md:truncate md:text-base">{item.name}</h3>
             <p className="text-text-secondary hidden text-[13px] leading-[18px] md:block">ID do token: {item.tokenId}</p>
             <p className="text-text-secondary text-[13px] leading-[18px]">Edição: {item.editionLabel}</p>
             <p className="text-text-accent mt-1 text-lg font-bold md:hidden">
