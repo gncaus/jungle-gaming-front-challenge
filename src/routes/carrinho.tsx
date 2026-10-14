@@ -27,8 +27,9 @@ function CartPage() {
   }
 
   return (
-    // No mobile a tela ocupa a altura toda, para o resumo ficar na base mesmo com poucos itens.
-    <div className="page-container pb-4 max-md:flex max-md:min-h-dvh max-md:flex-col max-md:pb-0">
+    // No mobile, como no layout, o carrinho ocupa exatamente a tela: a lista rola por dentro e o
+    // resumo fica na base, sem conteúdo abaixo dele.
+    <div className="page-container pb-4 max-md:flex max-md:h-dvh max-md:flex-col max-md:overflow-hidden max-md:pb-0">
       <div className="relative flex items-center justify-center py-4 md:hidden">
         <Link
           to="/"
@@ -99,8 +100,8 @@ function CartPage() {
       )}
 
       {cart && cart.items.length > 0 && (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 max-md:flex-1 max-md:grid-rows-[auto_1fr] md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
-          <section aria-labelledby="cart-items-title">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col max-md:gap-4 md:grid-cols-[minmax(0,1fr)_332px] md:items-start md:gap-[86px]">
+          <section aria-labelledby="cart-items-title" className="max-md:-mx-6 max-md:min-h-0 max-md:flex-1 max-md:overflow-y-auto max-md:px-6 max-md:pb-2">
             <h2 id="cart-items-title" className="sr-only">
               Itens do carrinho
             </h2>

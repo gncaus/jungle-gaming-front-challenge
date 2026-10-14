@@ -72,9 +72,13 @@ function TextColumn({ title, items }: { title: string; items: string[] }) {
 export function SiteFooter() {
   // No mobile, o rodapé reserva o espaço da barra de navegação inferior quando ela existe.
   const withMobileNav = useLocation({ select: (location) => hasMobileNav(location.pathname) })
+  // O carrinho mobile ocupa exatamente a tela, como no layout: não há rodapé abaixo dele.
+  const onCart = useLocation({ select: (location) => location.pathname.startsWith('/carrinho') })
 
   return (
-    <footer className={cn('page-container mt-20 md:pb-6 xl:mt-[146px]', withMobileNav ? 'pb-24' : 'pb-6')}>
+    <footer
+      className={cn('page-container mt-20 md:pb-6 xl:mt-[146px]', withMobileNav ? 'pb-24' : 'pb-6', onCart && 'max-md:hidden')}
+    >
       <div className="bg-card">
         <div className="grid gap-8 p-6 md:grid-cols-2 xl:grid-cols-[297px_266px_265px_1fr] xl:gap-0 xl:px-0 xl:pt-8 xl:pb-4">
           {pillars.map((pillar) => (

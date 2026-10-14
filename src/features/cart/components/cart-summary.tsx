@@ -47,7 +47,7 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
     <section
       aria-labelledby={`${fieldId}-title`}
       // No mobile, como no layout, o resumo é uma folha presa à base da tela.
-      className="bg-card sticky bottom-0 z-30 -mx-6 self-end rounded-t-[28px] p-6 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:mx-0 md:rounded-none md:bg-transparent md:p-0 md:shadow-none"
+      className="bg-card -mx-6 shrink-0 rounded-t-[28px] p-6 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:mx-0 md:rounded-none md:bg-transparent md:p-0 md:shadow-none"
     >
       <h2 id={`${fieldId}-title`} className="hidden border-b pb-3 text-lg font-bold md:block">
         Resumo da carteira
@@ -58,7 +58,7 @@ export function CartSummary({ cart, couponCode, onCouponChange, actions }: CartS
           Código promocional
         </label>
         {/* No mobile, como no layout, um campo em pílula com o botão por dentro. */}
-        <div className="max-md:border-border max-md:bg-background flex max-md:rounded-full max-md:border max-md:p-1">
+        <div className="max-md:border-border flex max-md:rounded-full max-md:border max-md:p-1">
           <input
             id={fieldId}
             name="coupon"

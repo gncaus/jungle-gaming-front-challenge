@@ -362,7 +362,7 @@ O layout é escuro e não há tema claro.
   - O desconto aparece como "(-) 0.00 ETH", no mesmo formato dos outros valores; o frame mostra "(-) 00.00".
   - Com um cupom aplicado, a linha de desconto leva a descrição do cupom e aparece a opção de removê-lo.
   - "Conectar e finalizar" leva ao pagamento; a conexão da carteira acontece lá.
-  - No mobile, como no frame, o resumo (cupom em pílula com o botão por dentro, valores e "Conectar e finalizar") é uma folha presa à base da tela, mesmo com poucos itens; "Continuar explorando" fica no botão de voltar do topo, e "Colecionadores também viram" não aparece.
+  - No mobile, como no frame, o resumo (cupom em pílula com o botão por dentro, valores e "Conectar e finalizar") é uma folha na base da tela. O carrinho ocupa exatamente a tela: a lista de itens rola por dentro, a página não rola, e não há rodapé nem "Colecionadores também viram" abaixo. "Continuar explorando" fica no botão de voltar do topo.
 - **Pagamento:**
   - A composição segue os frames: no desktop, "Perfil do colecionador" e "Usar outra carteira?" à esquerda, e "Seus NFTs", valores e "Carteira e rede" à direita; no mobile, "Carteira conectada / Trocar carteira", os cartões das carteiras, "Carteira e rede", o total e "Confirmar compra" presa à base da tela.
   - O formulário usa os campos do contrato de carteira (os mesmos da tela de Carteiras): o que o frame chama de "Nome de usuário" aqui é "Apelido da carteira".
