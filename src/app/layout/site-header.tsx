@@ -44,7 +44,8 @@ export function SiteHeader() {
               </Link>
             </li>
             <li>
-              <Link to="/" hash="catalogo" className={cn(navLinkClass, !isHome && activeNavClass)}>
+              {/* Leva ao catálogo, que fica na página inicial; fora dela nenhum item fica em destaque. */}
+              <Link to="/" hash="catalogo" activeOptions={{ includeHash: true }} className={navLinkClass}>
                 Mercado
               </Link>
             </li>

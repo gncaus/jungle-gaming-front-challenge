@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useDeferredValue } from 'react'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
 import { Pagination } from '@/features/catalog/components/pagination'
 import { nftListQueryOptions } from '@/features/catalog/hooks/queries'
@@ -20,6 +21,13 @@ interface NftGridProps {
 
 export function NftGrid({ search, hasActiveFilters, onClearFilters }: NftGridProps) {
   const { data, error, isPending, isFetching, refetch } = useQuery(nftListQueryOptions(toListQuery(search)))
+
+  // Quando os dados chegam, só a primeira linha de cards é montada na hora. O restante é
+  // montado logo em seguida, em uma renderização que o React pode interromper, para a chegada
+  // dos dados não virar uma tarefa longa. Até lá, os lugares continuam com o skeleton.
+  const total = data?.items.length ?? 0
+  const deferredTotal = useDeferredValue(total)
+  const mounted = Math.min(total, Math.max(deferredTotal, priorityCards))
 
   if (isPending) {
     return (
@@ -72,9 +80,13 @@ export function NftGrid({ search, hasActiveFilters, onClearFilters }: NftGridPro
         {isFetching && ' · atualizando…'}
       </p>
       <div className={gridClass}>
-        {data.items.map((nft, index) => (
-          <NftCard key={nft.id} nft={nft} priority={search.page === 1 && index < priorityCards} />
-        ))}
+        {data.items.map((nft, index) =>
+          index < mounted ? (
+            <NftCard key={nft.id} nft={nft} priority={search.page === 1 && index < priorityCards} />
+          ) : (
+            <NftCardSkeleton key={nft.id} />
+          ),
+        )}
       </div>
       <Pagination page={data.page} totalPages={data.totalPages} />
     </div>

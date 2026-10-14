@@ -4,12 +4,27 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 
+/** Chunk do componente de uma rota, como o plugin do router o nomeia ao dividir o código. */
+const routeChunk = /src\/routes\/(.+)\.tsx\?tsr-split=component$/
+
+/** `nft/$nftId` vira `^/nft/[^/]+/?$`; `index` vira `^//?$`; uma rota de layout casa também com as filhas. */
+function routePattern(route: string, isLayout: boolean): string {
+  const path = route
+    .split('/')
+    .filter((segment) => segment !== 'index')
+    .map((segment) => (segment.startsWith('$') ? '[^/]+' : segment))
+    .join('/')
+  return `^/${path}${isLayout ? '(/|$)' : '/?$'}`
+}
+
 /**
- * O ponto de entrada importa a aplicação e a API simulada com `import()`, e o Vite só
- * anuncia no HTML os chunks de importação estática. Este plugin acrescenta
- * `<link rel="modulepreload">` para esses chunks (e o da página inicial, que o router também
- * carrega sob demanda) e suas dependências, para o navegador baixá-los junto com o HTML,
- * em paralelo, em vez de descobri-los um depois do outro.
+ * O ponto de entrada importa a aplicação e a API simulada com `import()`, e o router carrega
+ * o componente de cada rota sob demanda. O Vite só anuncia no HTML os chunks de importação
+ * estática, então o navegador descobriria os outros um depois do outro. Este plugin acrescenta:
+ *
+ * - `<link rel="modulepreload">` para os chunks de `modules` e suas dependências, usados em
+ *   toda página;
+ * - um script curto que faz o mesmo para os chunks da rota do endereço aberto, e só dela.
  */
 function preloadDynamicEntries(modules: string[]): Plugin {
   return {
@@ -18,24 +33,41 @@ function preloadDynamicEntries(modules: string[]): Plugin {
     transformIndexHtml: {
       order: 'post',
       handler(_html, { bundle }) {
-        const files = new Set<string>()
-        for (const output of Object.values(bundle ?? {})) {
-          if (output.type !== 'chunk') continue
-          const source = output.facadeModuleId?.replaceAll('\\', '/') ?? ''
-          if (modules.some((module) => source.includes(module))) {
-            files.add(output.fileName)
-            output.imports.forEach((imported) => files.add(imported))
+        const chunks = Object.values(bundle ?? {}).filter((output) => output.type === 'chunk')
+        const sourceOf = (chunk: (typeof chunks)[number]) => chunk.facadeModuleId?.replaceAll('\\', '/') ?? ''
+
+        const always = new Set<string>()
+        for (const chunk of chunks) {
+          if (modules.some((module) => sourceOf(chunk).includes(module))) {
+            always.add(chunk.fileName)
+            chunk.imports.forEach((imported) => always.add(imported))
           }
         }
-        return [...files].map(
+
+        const routes = chunks.flatMap((chunk) => {
+          const route = routeChunk.exec(sourceOf(chunk))?.[1]
+          return route ? [{ route, files: [chunk.fileName, ...chunk.imports].filter((file) => !always.has(file)) }] : []
+        })
+        const byRoute = routes.map(({ route, files }) => [
+          routePattern(route, routes.some((other) => other.route.startsWith(`${route}/`))),
+          files,
+        ])
+
+        // Prioridade baixa: o download começa cedo, mas não disputa banda com o CSS e a
+        // fonte de que a primeira pintura (a tela de carregamento do index.html) precisa.
+        const links = [...always].map(
           (fileName): HtmlTagDescriptor => ({
             tag: 'link',
-            // Prioridade baixa: o download começa cedo, mas não disputa banda com o CSS e a
-            // fonte de que a primeira pintura (a tela de carregamento do index.html) precisa.
             attrs: { rel: 'modulepreload', crossorigin: true, fetchpriority: 'low', href: `/${fileName}` },
             injectTo: 'head',
           }),
         )
+        const routePreload: HtmlTagDescriptor = {
+          tag: 'script',
+          children: `for(const[r,fs]of ${JSON.stringify(byRoute)})if(new RegExp(r).test(location.pathname))for(const f of fs){const l=document.createElement("link");l.rel="modulepreload";l.crossOrigin="";l.fetchPriority="low";l.href="/"+f;document.head.append(l)}`,
+          injectTo: 'head',
+        }
+        return [...links, routePreload]
       },
     },
   }
@@ -46,7 +78,7 @@ export default defineConfig({
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
-    preloadDynamicEntries(['src/app/bootstrap.tsx', 'src/mocks/browser.ts', 'src/routes/index.tsx']),
+    preloadDynamicEntries(['src/app/bootstrap.tsx', 'src/mocks/browser.ts']),
   ],
   resolve: {
     alias: {
