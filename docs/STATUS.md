@@ -146,6 +146,7 @@ Atualizado em 13/10/2026, ao fim da fatia 10.
 - Busca do cabeçalho aberta no lugar do menu, sem cobrir "Aprenda".
 - Carrinho, recibo, perfil, carteiras, filtros e rodapé ajustados ao layout (lista abaixo no `ARCHITECTURE.md`).
 - Lighthouse refeito: início mobile 90, detalhe mobile 91, desktop 100.
+- Pagamento refeito conforme os frames (desktop e mobile); resumo do carrinho e confirmação presos à base da tela no mobile.
 
 ## Em andamento
 
@@ -182,7 +183,7 @@ O checkout limpo e o deploy final já foram conferidos.
 - O cupom aplicado vive na URL do carrinho (`?cupom=`).
 - Há tela de favoritos (`/favoritos`), criada para o coração da barra do mobile ter destino; a barra segue o frame.
 
-- O pagamento tem três passos explícitos (salvar carteira, conectar, confirmar), com o motivo do bloqueio escrito junto do botão.
+- O pagamento segue a composição dos frames; "Conectar carteira" salva os dados antes de conectar, e o motivo do bloqueio aparece junto do botão de confirmar.
 - A chave de idempotência é por conteúdo do pedido e fica no navegador, sob o id do usuário.
 - A confirmação é uma página com URL própria, não um diálogo.
 

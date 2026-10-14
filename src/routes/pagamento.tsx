@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useSession } from '@/features/auth/hooks/use-session'
 import { requireSession } from '@/features/auth/search'
@@ -13,10 +13,13 @@ import { WalletPicker } from '@/features/checkout/components/wallet-picker'
 import { quoteKeys, useQuote } from '@/features/checkout/hooks/use-quote'
 import { useCreateOrder } from '@/features/orders/hooks/use-orders'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { WalletForm } from '@/features/wallets/components/wallet-form'
-import { useWallets, walletKeys } from '@/features/wallets/hooks/use-wallets'
+import { WalletFields } from '@/features/wallets/components/wallet-form'
+import { useWalletForm, walletDefaults } from '@/features/wallets/hooks/use-wallet-form'
+import { useSaveWallet, useWallets, walletKeys } from '@/features/wallets/hooks/use-wallets'
 import { slotNames } from '@/features/wallets/labels'
 import type { WalletSlot } from '@/features/wallets/schemas'
+import { announce } from '@/shared/lib/announce'
+import { applyApiError } from '@/shared/lib/form-errors'
 import { HttpError } from '@/shared/lib/http'
 import { formatEth } from '@/shared/lib/money'
 import { cn } from '@/shared/lib/utils'
@@ -51,10 +54,28 @@ function CheckoutPage() {
   const createOrder = useCreateOrder()
 
   const [slot, setSlot] = useState<WalletSlot>('primary')
-  const [editing, setEditing] = useState(false)
+  /** Carteira com o formulário aberto no mobile (no desktop o formulário fica sempre à vista). */
+  const [editing, setEditing] = useState<WalletSlot | null>(null)
   const [note, setNote] = useState('')
   const [failure, setFailure] = useState('')
   const [acknowledged, setAcknowledged] = useState<Acknowledged | null>(null)
+
+  const saveWalletMutation = useSaveWallet()
+  const walletForm = useWalletForm(null)
+  const provider = walletForm.watch('provider')
+
+  // O formulário mostra a carteira escolhida: recomeça quando ela muda (outra escolhida, salva
+  // ou conectada) e, para um cadastro novo, parte das sugestões do perfil.
+  useEffect(() => {
+    walletForm.reset(
+      walletDefaults(wallets.data?.[slot] ?? null, {
+        displayName: profile.data?.displayName ?? '',
+        nickname: profile.data?.walletNickname ?? '',
+        email: profile.data?.email ?? '',
+        ensName: profile.data?.ensName ?? '',
+      }),
+    )
+  }, [walletForm, wallets.data, profile.data, slot])
 
   // A primeira cotação exibida é a que o usuário está vendo ao chegar: fica como a aceita.
   if (quote.data && !acknowledged) {
@@ -113,15 +134,46 @@ function CheckoutPage() {
   const quoteError = quote.error instanceof HttpError ? quote.error : null
   const stockBlocked = quoteError?.code === 'INSUFFICIENT_STOCK'
   const valuesChanged = Boolean(quote.data && acknowledged && quote.data.version !== acknowledged.version)
+  // Dados novos ou alterados ainda não foram salvos: conectar salva antes.
+  const unsaved = !wallet || walletForm.formState.isDirty
 
   // O que ainda impede a confirmação, em ordem; aparece escrito junto do botão.
   const blockers = [
     !wallet && `Cadastre a carteira ${slotNames[slot].toLowerCase()}.`,
-    wallet && wallet.connection !== 'connected' && 'Conecte a carteira.',
+    wallet && (unsaved || wallet.connection !== 'connected') && 'Conecte a carteira.',
     stockBlocked && 'Ajuste as quantidades no carrinho.',
     quoteError && !stockBlocked && 'Resolva o problema com os valores do pedido.',
     valuesChanged && 'Revise os novos valores do pedido.',
   ].filter((blocker): blocker is string => typeof blocker === 'string')
+
+  /** Salva o formulário da carteira escolhida. Devolve `false` se houver erros. */
+  function saveWallet(): Promise<boolean> {
+    return new Promise((resolve) => {
+      void walletForm.handleSubmit(
+        (input) =>
+          saveWalletMutation.mutate(
+            { slot, input },
+            {
+              onSuccess: () => {
+                announce('Carteira salva.')
+                setEditing(null)
+                resolve(true)
+              },
+              onError: (error) => {
+                applyApiError(walletForm, error)
+                resolve(false)
+              },
+            },
+          ),
+        () => resolve(false),
+      )()
+    })
+  }
+
+  function chooseSlot(next: WalletSlot) {
+    setSlot(next)
+    setEditing(null)
+  }
 
   function refreshPrices() {
     if (!user) return
@@ -159,9 +211,11 @@ function CheckoutPage() {
     )
   }
 
+  const showFormOnMobile = !wallet || editing === slot
+
   return (
     <div className="page-container pb-4">
-      <nav aria-label="Trilha" className="hidden pt-[30px] pb-3 text-sm font-bold md:block">
+      <nav aria-label="Trilha" className="hidden pt-[30px] pb-6 text-sm font-bold md:block">
         <ol className="flex gap-2">
           <li>
             <Link to="/" className="hover:text-primary-light transition-colors">
@@ -170,8 +224,8 @@ function CheckoutPage() {
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <Link to="/carrinho" search={{ cupom }} className="hover:text-primary-light transition-colors">
-              Carrinho
+            <Link to="/" hash="catalogo" className="hover:text-primary-light transition-colors">
+              Mercado
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -190,53 +244,43 @@ function CheckoutPage() {
         <h1 className="text-lg font-bold md:sr-only">Pagamento com carteira</h1>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_340px] md:items-start xl:grid-cols-[minmax(0,1fr)_405px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_340px] md:items-start md:gap-x-12 md:gap-y-4 xl:grid-cols-[minmax(0,1fr)_405px] xl:gap-x-[72px]">
         <div className="flex flex-col gap-6 md:row-span-2">
           <WalletPicker
             wallets={wallets.data}
             selected={slot}
-            onSelect={(next) => {
+            onSelect={chooseSlot}
+            editing={editing}
+            onEdit={(next) => {
               setSlot(next)
-              setEditing(false)
+              setEditing((current) => (current === next ? null : next))
             }}
+            className="md:hidden"
           />
 
-          <section aria-labelledby="wallet-data-title">
-            <div className="flex items-center justify-between gap-3">
-              <h2 id="wallet-data-title" className="text-lg font-bold">
-                Dados da carteira {slotNames[slot].toLowerCase()}
-              </h2>
-              {wallet && (
-                <button
-                  type="button"
-                  onClick={() => setEditing((current) => !current)}
-                  aria-expanded={editing}
-                  className="text-text-accent hover:text-primary-light rounded-sm text-sm font-bold md:hidden"
-                >
-                  {editing ? 'Fechar' : 'Editar'}
-                </button>
-              )}
-            </div>
-            {/* No mobile, os dados de uma carteira já cadastrada só abrem ao editar. */}
-            <div className={cn('mt-4', wallet && !editing && 'hidden md:block')}>
-              <WalletForm
-                // Trocar de carteira, ou salvar, recomeça o formulário com os dados daquela carteira.
-                key={`${slot}:${wallet?.updatedAt ?? 'new'}`}
-                slot={slot}
-                wallet={wallet}
-                suggestions={{
-                  displayName: profile.data?.displayName ?? '',
-                  nickname: profile.data?.walletNickname ?? '',
-                  email: profile.data?.email ?? '',
-                  ensName: profile.data?.ensName ?? '',
-                }}
-                onSaved={() => setEditing(false)}
+          {/* No mobile os dados só aparecem para cadastrar ou editar, pelo menu do cartão. */}
+          <section aria-labelledby="wallet-data-title" className={cn(!showFormOnMobile && 'max-md:hidden')}>
+            <h2 id="wallet-data-title" className="mb-4 text-lg font-bold">
+              <span className="md:hidden">Dados da carteira {slotNames[slot].toLowerCase()}</span>
+              <span className="hidden md:inline">Perfil do colecionador</span>
+            </h2>
+            <WalletFields form={walletForm} />
+            <label className="mt-5 hidden w-fit cursor-pointer items-center gap-2 text-[15px] md:flex">
+              <input
+                type="checkbox"
+                checked={slot === 'secondary'}
+                onChange={(event) => chooseSlot(event.target.checked ? 'secondary' : 'primary')}
+                className="border-primary checked:bg-primary size-4 cursor-pointer appearance-none rounded-full border-2 checked:shadow-[inset_0_0_0_2px_var(--color-background)]"
               />
-            </div>
+              Usar outra carteira?
+              {wallets.data.secondary && (
+                <span className="text-text-secondary text-sm">({wallets.data.secondary.nickname})</span>
+              )}
+            </label>
           </section>
 
-          <div>
-            <label htmlFor="collector-note" className="mb-2 block text-sm">
+          <div className="hidden md:block">
+            <label htmlFor="collector-note" className="mb-2 block text-[15px]">
               Observação do colecionador (opcional)
             </label>
             <textarea
@@ -245,74 +289,98 @@ function CheckoutPage() {
               onChange={(event) => setNote(event.target.value)}
               maxLength={280}
               rows={5}
-              className="bg-background md:bg-card focus-visible:border-primary w-full max-w-[350px] rounded-lg border p-3 text-sm md:rounded-sm"
+              className="bg-card focus-visible:border-primary w-full max-w-[370px] rounded-sm border p-3 text-sm"
             />
           </div>
         </div>
 
         <section aria-labelledby="order-summary-title" className="flex flex-col gap-4">
-          <h2 id="order-summary-title" className="text-lg font-bold">
-            Seus NFTs
-          </h2>
+          <WalletConnection
+            slot={slot}
+            wallet={wallet}
+            provider={provider}
+            onProviderChange={(next) =>
+              walletForm.setValue('provider', next, {
+                shouldDirty: true,
+                shouldValidate: walletForm.formState.isSubmitted,
+              })
+            }
+            saveFirst={unsaved ? saveWallet : null}
+            className="max-md:order-1 md:order-last md:mt-2"
+          />
 
-          {quote.isPending && (
-            <>
-              <Skeleton className="h-[70px] w-full" />
-              <QuoteTotalsSkeleton />
-            </>
-          )}
           {quote.data && (
-            <>
-              <OrderItems items={quote.data.items} />
-              <p className="text-center text-sm">
-                Tem um código promocional?{' '}
-                <Link
-                  to="/carrinho"
-                  search={{ cupom }}
-                  className="text-text-accent hover:text-primary-light underline underline-offset-4"
+            <p className="flex items-baseline justify-end gap-6 text-lg font-bold max-md:order-2 md:hidden" aria-hidden="true">
+              Total:
+              <span className="text-text-accent text-xl">{formatEth(quote.data.total)}</span>
+            </p>
+          )}
+
+          <div className="flex flex-col gap-4 max-md:order-3 max-md:mt-6">
+            <h2 id="order-summary-title" className="text-lg font-bold">
+              Seus NFTs
+            </h2>
+            <div aria-hidden="true" className="-mt-2 flex justify-between border-b pb-2 text-base font-bold">
+              <span>NFTs</span>
+              <span>Subtotal</span>
+            </div>
+
+            {quote.isPending && (
+              <>
+                <Skeleton className="h-[70px] w-full" />
+                <QuoteTotalsSkeleton />
+              </>
+            )}
+            {quote.data && (
+              <>
+                <OrderItems items={quote.data.items} />
+                <p className="text-center text-sm">
+                  Tem um código promocional?{' '}
+                  <Link
+                    to="/carrinho"
+                    search={{ cupom }}
+                    className="text-text-accent hover:text-primary-light underline-offset-4 hover:underline"
+                  >
+                    Aplique aqui
+                  </Link>
+                </p>
+                <QuoteTotals quote={quote.data} />
+              </>
+            )}
+            {quoteError && (
+              <div role="alert" className="flex flex-col items-start gap-2 text-sm">
+                <p>{quoteError.message}</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/carrinho" search={{ cupom: stockBlocked ? cupom : undefined }}>
+                    Voltar ao carrinho
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {valuesChanged && quote.data && acknowledged && (
+              <div role="alert" className="border-primary flex flex-col items-start gap-3 rounded-sm border p-4 text-sm">
+                <p>
+                  <span className="font-bold">Os valores do pedido mudaram.</span> O total era{' '}
+                  {formatEth(acknowledged.total)} e agora é {formatEth(quote.data.total)}. Confira o resumo acima
+                  antes de confirmar.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (quote.data) setAcknowledged({ version: quote.data.version, total: quote.data.total })
+                    setFailure('')
+                  }}
                 >
-                  Aplique no carrinho
-                </Link>
-              </p>
-              <QuoteTotals quote={quote.data} />
-            </>
-          )}
-          {quoteError && (
-            <div role="alert" className="flex flex-col items-start gap-2 text-sm">
-              <p>{quoteError.message}</p>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/carrinho" search={{ cupom: stockBlocked ? cupom : undefined }}>
-                  Voltar ao carrinho
-                </Link>
-              </Button>
-            </div>
-          )}
-
-          {valuesChanged && quote.data && acknowledged && (
-            <div role="alert" className="border-primary flex flex-col items-start gap-3 rounded-sm border p-4 text-sm">
-              <p>
-                <span className="font-bold">Os valores do pedido mudaram.</span> O total era{' '}
-                {formatEth(acknowledged.total)} e agora é {formatEth(quote.data.total)}. Confira o resumo acima
-                antes de confirmar.
-              </p>
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (quote.data) setAcknowledged({ version: quote.data.version, total: quote.data.total })
-                  setFailure('')
-                }}
-              >
-                Revisei os novos valores
-              </Button>
-            </div>
-          )}
-
-          <h2 className="mt-2 text-center text-lg font-bold">Carteira e rede</h2>
-          <WalletConnection wallet={wallet} />
+                  Revisei os novos valores
+                </Button>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* No mobile, como no layout, a confirmação fica presa à base da tela. */}
-        <div className="bg-background sticky bottom-0 z-30 -mx-6 -mt-4 flex flex-col gap-2 px-6 pt-3 pb-5 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:col-start-2 md:mx-0 md:bg-transparent md:p-0 md:shadow-none">
+        <div className="bg-background sticky bottom-0 z-30 -mx-6 flex flex-col gap-2 px-6 pt-3 pb-5 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:col-start-2 md:mx-0 md:bg-transparent md:p-0 md:shadow-none">
           <Button
             size="lg"
             className="h-[60px] w-full rounded-full md:h-[45px] md:rounded-md"

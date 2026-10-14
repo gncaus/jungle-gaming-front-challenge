@@ -226,8 +226,8 @@ Valores em ETH trafegam como string decimal (`"26.846"`), validados por `ethAmou
 
 O pagamento (`/pagamento`) e o pedido (`/pedido/<id>`) são rotas privadas.
 
-- **Três passos visíveis:** escolher e, se preciso, salvar a carteira; conectá-la; confirmar a compra. O botão de confirmar fica desabilitado enquanto algo impede, e o motivo aparece escrito junto dele.
-- **Carteira:** o usuário escolhe entre a principal e a secundária. O formulário é o do contrato de carteiras, o mesmo da tela de Carteiras. A conexão é simulada: conectar pode ser recusado pela carteira, e desconectar bloqueia a compra de novo.
+- **Passos:** preencher os dados da carteira, conectá-la e confirmar a compra. Como no layout, não há botão "Salvar": "Conectar carteira" valida e salva os dados novos ou alterados antes de conectar. O botão de confirmar fica desabilitado enquanto algo impede, e o motivo aparece escrito junto dele.
+- **Carteira:** no desktop, o formulário "Perfil do colecionador" mostra a carteira principal, e "Usar outra carteira?" troca para a secundária. No mobile, cada carteira é um cartão, e o menu ⋮ abre os dados para cadastrar ou editar. "Carteira e rede" escolhe o tipo de carteira (o mesmo campo "Tipo de carteira" do formulário) e mostra a conexão, que é simulada: conectar pode ser recusado pela carteira, e desconectar bloqueia a compra de novo.
 - **Revisão:** itens e valores vêm da cotação. A tela guarda a versão da cotação que o usuário viu. Se chegar outra (preço, estoque ou taxa mudaram, por evento em tempo real ou por nova consulta), aparece o total antigo e o novo, e a compra só pode ser confirmada depois de o usuário declarar que revisou.
 - **Envio:** o pedido leva a versão revisada. Se a API responder `QUOTE_STALE` ou `INSUFFICIENT_STOCK`, a tela busca carrinho e cotação atuais, o que leva à mesma revisão.
 - **Idempotência** (`src/features/orders/attempt.ts`): a chave é gerada uma vez por tentativa e guardada no navegador, sob o id do usuário. Enquanto o conteúdo do pedido for o mesmo, a chave é a mesma: clique repetido, nova tentativa depois de um timeout e refresh no meio recuperam o pedido já criado. Mudou o conteúdo, é outra tentativa. A chave é descartada quando o pedido chega a um estado final e quando a sessão muda.
@@ -364,11 +364,12 @@ O layout é escuro e não há tema claro.
   - "Conectar e finalizar" leva ao pagamento; a conexão da carteira acontece lá.
   - No mobile, como no frame, o resumo (cupom, valores e "Conectar e finalizar") é uma folha presa à base da tela, e "Continuar explorando" fica no botão de voltar do topo.
 - **Pagamento:**
-  - O formulário do frame mistura dados de perfil e de carteira. A aplicação usa os campos do contrato de carteira (os mesmos da tela de Carteiras): o que o frame chama de "Nome de usuário" aqui é "Apelido da carteira", e o sufixo do ENS é fixo em `.eth`.
-  - "Usar outra carteira?" virou a escolha explícita entre carteira principal e secundária, como no frame mobile.
-  - As opções de "Carteira e rede" do frame (MetaMask, WalletConnect, Coinbase) repetiam o campo "Tipo de carteira" do formulário. Ficou um campo só, no formulário; o bloco "Carteira e rede" mostra a carteira escolhida, o estado da conexão e o botão de conectar ou desconectar.
-  - No mobile, os dados de uma carteira já cadastrada ficam recolhidos atrás de "Editar".
-  - "Tem um código promocional?" leva ao carrinho, onde o cupom é aplicado.
+  - A composição segue os frames: no desktop, "Perfil do colecionador" e "Usar outra carteira?" à esquerda, e "Seus NFTs", valores e "Carteira e rede" à direita; no mobile, "Carteira conectada / Trocar carteira", os cartões das carteiras, "Carteira e rede", o total e "Confirmar compra" presa à base da tela.
+  - O formulário usa os campos do contrato de carteira (os mesmos da tela de Carteiras): o que o frame chama de "Nome de usuário" aqui é "Apelido da carteira".
+  - Abaixo de "Carteira e rede" há o estado da conexão e o botão de conectar ou desconectar, que o layout não desenha e o enunciado pede.
+  - "Trocar carteira" leva à tela de Carteiras. No mobile, "Seus NFTs" e os valores aparecem abaixo do total, e a observação do colecionador só existe no desktop, como nos frames.
+  - A trilha mostra "Início / Mercado / Pagamento", como no layout; a volta ao carrinho fica no botão do topo no mobile e no atalho do cabeçalho no desktop.
+  - "Tem um código promocional? Aplique aqui" leva ao carrinho, onde o cupom é aplicado.
 - **Confirmação do pedido:** é uma página (`/pedido/<id>`), não um diálogo sobre a tela anterior, para sobreviver a refresh e poder ser retomada. O recibo mostra também o subtotal e, se houver, o desconto. O link para o explorador vem com o aviso de que a transação é simulada.
 - **Pedido pendente e recusado:** não estão no layout; seguem o padrão visual do recibo.
 - **Avisos:** resultados de ações (como favoritar) e falhas aparecem em um aviso no rodapé da tela, que é também a região `aria-live` da aplicação.

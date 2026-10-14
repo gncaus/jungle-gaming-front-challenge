@@ -190,27 +190,26 @@ test('quem não tem carteira cadastra pelo pagamento, com validação dos campos
   await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
 
   await expect(page.getByText('Cadastre a carteira principal.')).toBeVisible()
-  const save = page.getByRole('button', { name: 'Salvar carteira' })
+  // Como no layout, não há "Salvar": conectar salva os dados antes, e valida o formulário.
+  const connect = page.getByRole('button', { name: 'Conectar carteira' })
   const address = page.getByLabel('Endereço da carteira')
 
   await address.fill('0x123')
-  await save.click()
+  await connect.click()
   await expect(address).toHaveAccessibleDescription('Informe um endereço 0x com 40 caracteres hexadecimais')
-  await expect(page.getByLabel('Rede')).toHaveAccessibleDescription('Selecione uma rede')
+  await expect(page.getByLabel(/^Rede/)).toHaveAccessibleDescription('Selecione uma rede')
   await expect(page.getByLabel('Tipo de carteira')).toHaveAccessibleDescription('Selecione uma carteira')
 
   await page.getByLabel('Apelido da carteira').fill('Carteira do dia a dia')
-  await page.getByLabel('Rede').selectOption({ label: 'Polygon' })
+  await page.getByLabel(/^Rede/).selectOption({ label: 'Polygon' })
   await page.getByLabel('Nome do perfil').fill('Bruno NFT')
   await address.fill('0x1234567890abcdef1234567890ABCDEF12345678')
   await page.getByLabel('Tipo de carteira').selectOption({ label: 'Coinbase Wallet' })
   await page.getByLabel('Código de indicação').fill('AMIGO-01')
   await page.getByLabel('Nome ENS (sem o .eth)').fill('brunonft')
-  await save.click()
-  await expect(announcer(page)).toHaveText('Carteira salva.')
-
-  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await connect.click()
   await expect(connectionState(page)).toHaveText('Carteira conectada')
+  await expect(page.getByRole('radio', { name: 'Coinbase Wallet' })).toBeChecked()
   await confirmButton(page).click()
 
   await expect(page.getByRole('heading', { level: 1, name: receiptTitle })).toBeVisible(settled)

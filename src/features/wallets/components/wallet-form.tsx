@@ -1,72 +1,25 @@
-import { useForm } from 'react-hook-form'
-import type { z } from 'zod'
 import { networkIds } from '@/features/catalog/schemas'
+import { useWalletForm, type WalletFormApi } from '@/features/wallets/hooks/use-wallet-form'
 import { useSaveWallet } from '@/features/wallets/hooks/use-wallets'
 import { networkNames } from '@/features/catalog/labels'
 import { providerNames } from '@/features/wallets/labels'
-import {
-  walletInputSchema,
-  walletProviders,
-  type Wallet,
-  type WalletInput,
-  type WalletSlot,
-} from '@/features/wallets/schemas'
+import { walletProviders, type Wallet, type WalletInput, type WalletSlot } from '@/features/wallets/schemas'
 import { announce } from '@/shared/lib/announce'
 import { applyApiError } from '@/shared/lib/form-errors'
-import { zodResolver } from '@/shared/lib/zod-resolver'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { SelectField } from '@/shared/ui/select-field'
 import { TextField } from '@/shared/ui/text-field'
 
-type WalletValues = z.output<typeof walletInputSchema>
-
-interface WalletFormProps {
-  slot: WalletSlot
-  /** Carteira já cadastrada neste lugar, ou `null` para cadastrar. */
-  wallet: Wallet | null
-  /** Valores sugeridos para um cadastro novo (ex.: nome e e-mail do perfil). */
-  suggestions?: Partial<WalletInput>
-  onSaved?: () => void
-}
-
 const networkOptions = networkIds.map((id) => ({ value: id, label: networkNames[id] }))
 const providerOptions = walletProviders.map((id) => ({ value: id, label: providerNames[id] }))
 
-/** Cadastro e edição de carteira. Os campos e as regras são os do contrato da API. */
-export function WalletForm({ slot, wallet, suggestions, onSaved }: WalletFormProps) {
-  const save = useSaveWallet()
-  const form = useForm<WalletInput, unknown, WalletValues>({
-    resolver: zodResolver(walletInputSchema),
-    defaultValues: wallet ?? {
-      displayName: '',
-      nickname: '',
-      profileName: '',
-      address: '',
-      secondaryAddress: '',
-      referralCode: '',
-      email: '',
-      ensName: '',
-      ...suggestions,
-    },
-  })
+/** Os campos da carteira, na ordem do layout. Quem usa decide como e quando salvar. */
+export function WalletFields({ form, className }: { form: WalletFormApi; className?: string }) {
   const { errors } = form.formState
 
-  const submit = form.handleSubmit((input) => {
-    if (save.isPending) return
-    save.mutate(
-      { slot, input },
-      {
-        onSuccess: () => {
-          announce('Carteira salva.')
-          onSaved?.()
-        },
-        onError: (error) => applyApiError(form, error),
-      },
-    )
-  })
-
   return (
-    <form onSubmit={submit} noValidate className="grid gap-x-6 gap-y-4 md:grid-cols-2">
+    <div className={cn('grid gap-x-6 gap-y-4 md:grid-cols-2', className)}>
       <p role="alert" className="text-text-coral text-sm empty:hidden md:col-span-2">
         {errors.root?.message}
       </p>
@@ -149,7 +102,42 @@ export function WalletForm({ slot, wallet, suggestions, onSaved }: WalletFormPro
         error={errors.ensName?.message}
         {...form.register('ensName')}
       />
-      <div className="md:col-span-2">
+    </div>
+  )
+}
+
+interface WalletFormProps {
+  slot: WalletSlot
+  /** Carteira já cadastrada neste lugar, ou `null` para cadastrar. */
+  wallet: Wallet | null
+  /** Valores sugeridos para um cadastro novo (ex.: nome e e-mail do perfil). */
+  suggestions?: Partial<WalletInput>
+  onSaved?: () => void
+}
+
+/** Cadastro e edição de carteira com o próprio botão de salvar, usado na tela de Carteiras. */
+export function WalletForm({ slot, wallet, suggestions, onSaved }: WalletFormProps) {
+  const save = useSaveWallet()
+  const form = useWalletForm(wallet, suggestions)
+
+  const submit = form.handleSubmit((input) => {
+    if (save.isPending) return
+    save.mutate(
+      { slot, input },
+      {
+        onSuccess: () => {
+          announce('Carteira salva.')
+          onSaved?.()
+        },
+        onError: (error) => applyApiError(form, error),
+      },
+    )
+  })
+
+  return (
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <WalletFields form={form} />
+      <div>
         <Button type="submit" disabled={save.isPending}>
           {save.isPending ? 'Salvando…' : 'Salvar carteira'}
         </Button>
