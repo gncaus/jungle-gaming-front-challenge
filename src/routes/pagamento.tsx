@@ -191,7 +191,7 @@ function CheckoutPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_340px] md:items-start xl:grid-cols-[minmax(0,1fr)_405px]">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:row-span-2">
           <WalletPicker
             wallets={wallets.data}
             selected={slot}
@@ -309,7 +309,10 @@ function CheckoutPage() {
 
           <h2 className="mt-2 text-center text-lg font-bold">Carteira e rede</h2>
           <WalletConnection wallet={wallet} />
+        </section>
 
+        {/* No mobile, como no layout, a confirmação fica presa à base da tela. */}
+        <div className="bg-background sticky bottom-0 z-30 -mx-6 -mt-4 flex flex-col gap-2 px-6 pt-3 pb-5 shadow-[0_-8px_24px_rgb(0_0_0/0.35)] md:static md:col-start-2 md:mx-0 md:bg-transparent md:p-0 md:shadow-none">
           <Button
             size="lg"
             className="h-[60px] w-full rounded-full md:h-[45px] md:rounded-md"
@@ -327,7 +330,7 @@ function CheckoutPage() {
           <p role="alert" className="text-text-coral text-sm empty:hidden">
             {failure}
           </p>
-        </section>
+        </div>
       </div>
     </div>
   )

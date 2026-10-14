@@ -362,6 +362,7 @@ O layout é escuro e não há tema claro.
   - O desconto aparece como "(-) 0.00 ETH", no mesmo formato dos outros valores; o frame mostra "(-) 00.00".
   - Com um cupom aplicado, a linha de desconto leva a descrição do cupom e aparece a opção de removê-lo.
   - "Conectar e finalizar" leva ao pagamento; a conexão da carteira acontece lá.
+  - No mobile, como no frame, o resumo (cupom, valores e "Conectar e finalizar") é uma folha presa à base da tela, e "Continuar explorando" fica no botão de voltar do topo.
 - **Pagamento:**
   - O formulário do frame mistura dados de perfil e de carteira. A aplicação usa os campos do contrato de carteira (os mesmos da tela de Carteiras): o que o frame chama de "Nome de usuário" aqui é "Apelido da carteira", e o sufixo do ENS é fixo em `.eth`.
   - "Usar outra carteira?" virou a escolha explícita entre carteira principal e secundária, como no frame mobile.

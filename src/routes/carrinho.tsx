@@ -131,7 +131,12 @@ function CartPage() {
                     Conectar e finalizar
                   </Link>
                 </Button>
-                <Link to="/" hash="catalogo" className="text-text-accent hover:text-primary-light text-base transition-colors">
+                {/* No mobile o botão de voltar do topo já leva ao catálogo, como no layout. */}
+                <Link
+                  to="/"
+                  hash="catalogo"
+                  className="text-text-accent hover:text-primary-light hidden text-base transition-colors md:inline"
+                >
                   Continuar explorando
                 </Link>
               </>
